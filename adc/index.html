@@ -873,7 +873,7 @@
     <div class="appbar-center">
       <div class="module-chip">Aerodrome Decision Card</div>
     </div>
-    <div class="appbar-right">
+    <div class="appbar-right topbar-right">
       <span class="mini-icon">☰</span>
       <span class="mini-icon">⚙</span>
     </div>
@@ -909,6 +909,8 @@
               <div class="result-meta" id="declaredMeta"></div>
             </div>
             <div class="result-value" id="asdaMetric">-</div>
+            <div id="gateMetric" hidden>—</div>
+            <div id="fullLengthMetric" hidden>—</div>
           </div>
           <div class="decision-table-wrap">
             <table>
@@ -1083,5 +1085,6 @@
   </div>
 
   <script src="app.js"></script>
+  <script src="../shared/module-bridge.js"></script>
 </body>
 </html>
