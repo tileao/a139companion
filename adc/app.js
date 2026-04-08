@@ -2,7 +2,6 @@ const GEOM_KEY = 'aw139_adc_geometry_v49';
     const CUSTOM_BASES_KEY = 'aw139_adc_custom_bases_v3';
     const INBOX_KEY = 'aw139_adc_inbox_v1';
     const STATE_KEY = 'aw139_adc_state_v49';
-    const FORCE_SINGLE_PAGE = true;
 
     const BUILTIN_BASES = {"SBNF":{"id":"SBNF","code":"SBNF","name":"Navegantes / Ministro Victor Konder, INTL","city":"SC - Brasil","adcTitle":"SBNF ADC 15 MAY 25","engineId":"adc_sbnf_v1","stability":"stable","locked":true,"schemaVersion":5,"defaultChartId":"ADC_MAIN","defaultRunwayId":"RWY_08_26","charts":[{"id":"ADC_MAIN","label":"ADC principal","asset":"sbnf_chart_p1.png","assetName":"sbnf_chart_p1.png","size":{"width":1191,"height":1684}}],"runways":[{"id":"RWY_08_26","label":"08/26","chartId":"ADC_MAIN","referenceEnd":"26","ends":["08","26"],"lengthM":1800,"widthM":45,"widthPx":45,"thresholdRef":{"x":187.91,"y":285.01},"thresholdOpp":{"x":952.76,"y":1383.23},"declaredDistances":{"26":{"tora":1800,"toda":1800,"asda":1800,"lda":1800},"08":{"tora":1800,"toda":1800,"asda":1800,"lda":1800}},"intersections":[{"id":"B","name":"TWY B","metersFromRef":739,"labelPoint":{"x":545.2,"y":707.89}},{"id":"A","name":"TWY A","metersFromRef":891,"labelPoint":{"x":608.08,"y":799.51}}],"endFeatures":{"26":{"displacedThresholdM":0,"stopwayM":0,"clearwayM":0},"08":{"displacedThresholdM":0,"stopwayM":0,"clearwayM":0}},"pavementRef":{"x":187.91,"y":285.01},"pavementOpp":{"x":952.76,"y":1383.23}}]},"SBME":{"id":"SBME","code":"SBME","name":"Macaé / Joaquim de Azevedo Mancebo","city":"RJ - Brasil","adcTitle":"SBME ADC 10 JUL 25","engineId":"adc_sbme_v1","stability":"stable","locked":true,"schemaVersion":5,"defaultChartId":"ADC_MAIN","defaultRunwayId":"RWY_05_23","charts":[{"id":"ADC_MAIN","label":"ADC principal","asset":"sbme_chart_p1.png","assetName":"sbme_chart_p1.png","size":{"width":862,"height":1300}}],"runways":[{"id":"RWY_05_23","label":"05/23","chartId":"ADC_MAIN","referenceEnd":"23","ends":["05","23"],"lengthM":1410,"widthM":30,"widthPx":27,"pavementRef":{"x":617.68,"y":268.22},"pavementOpp":{"x":182.56,"y":1068.5},"thresholdRef":{"x":617.68,"y":268.22},"thresholdOpp":{"x":182.56,"y":1068.5},"declaredDistances":{"23":{"tora":1410,"toda":1410,"asda":1410,"lda":1410},"05":{"tora":1410,"toda":1410,"asda":1410,"lda":1410}},"intersections":[{"id":"D","name":"TWY D","metersFromRef":216,"labelPoint":{"x":573.15,"y":404.58}},{"id":"B","name":"TWY B","metersFromRef":623,"labelPoint":{"x":454,"y":633}},{"id":"A","name":"TWY A","metersFromRef":1101,"labelPoint":{"x":294.69,"y":899.21}}],"endFeatures":{"23":{"displacedThresholdM":0,"stopwayM":0,"clearwayM":0},"05":{"displacedThresholdM":0,"stopwayM":0,"clearwayM":0}}},{"id":"RWY_06_24","label":"06/24","chartId":"ADC_MAIN","referenceEnd":"24","ends":["06","24"],"lengthM":899,"widthM":30,"widthPx":25,"pavementRef":{"x":623.03,"y":425.75},"pavementOpp":{"x":311.18,"y":916.06},"thresholdRef":{"x":623.03,"y":425.75},"thresholdOpp":{"x":311.18,"y":916.06},"declaredDistances":{"24":{"tora":899,"toda":899,"asda":899,"lda":899},"06":{"tora":899,"toda":899,"asda":899,"lda":899}},"intersections":[{"id":"B","name":"TWY B","metersFromRef":415,"labelPoint":{"x":502,"y":680}}],"endFeatures":{"24":{"displacedThresholdM":0,"stopwayM":0,"clearwayM":0},"06":{"displacedThresholdM":0,"stopwayM":0,"clearwayM":0}}}]},"SBVT":{"id":"SBVT_DRAFT_20260407_104549","code":"SBVT","name":"Vitória / Eurico de Aguiar Salles, INTL","city":"ES - Brasil","adcTitle":"SBVT ADC 23 MAR 23","engineId":"adc_sbvt_v1","stability":"draft","locked":false,"schemaVersion":5,"defaultChartId":"ADC_MAIN","defaultRunwayId":"RWY_06_24","charts":[{"id":"ADC_MAIN","label":"ADC principal","asset":"sbvt_chart_p1.png","assetName":"sbvt_chart_p1.png","size":{"width":863,"height":1300}}],"runways":[{"id":"RWY_06_24","label":"06/24","chartId":"ADC_MAIN","referenceEnd":"24","ends":["06","24"],"lengthM":1750,"widthM":45,"widthPx":26,"pavementRef":{"x":541.89,"y":396.93},"pavementOpp":{"x":238.65,"y":885.03},"thresholdRef":{"x":541.89,"y":396.93},"thresholdOpp":{"x":238.65,"y":885.03},"declaredDistances":{"24":{"tora":1750,"toda":1750,"asda":1750,"lda":1750},"06":{"tora":1750,"toda":1750,"asda":1750,"lda":1750}},"intersections":[{"id":"PP","name":"TWY PP","metersFromRef":668,"labelPoint":{"x":404,"y":577}},{"id":"C","name":"TWY C","metersFromRef":855,"labelPoint":{"x":382,"y":626}},{"id":"B","name":"TWY B","metersFromRef":1196,"labelPoint":{"x":309,"y":695}}],"endFeatures":{"24":{"displacedThresholdM":0,"stopwayM":0,"clearwayM":0},"06":{"displacedThresholdM":0,"stopwayM":0,"clearwayM":0}}},{"id":"RWY_02_20","label":"02/20","chartId":"ADC_MAIN","referenceEnd":"20","ends":["02","20"],"lengthM":2058,"widthM":45,"widthPx":28,"pavementRef":{"x":582.16,"y":272.74},"pavementOpp":{"x":677.41,"y":942.66},"thresholdRef":{"x":582.16,"y":272.74},"thresholdOpp":{"x":677.41,"y":942.66},"declaredDistances":{"20":{"tora":2058,"toda":2058,"asda":2058,"lda":2058},"02":{"tora":2058,"toda":2058,"asda":2058,"lda":2058}},"intersections":[{"id":"M","name":"TWY M","metersFromRef":209,"labelPoint":{"x":582,"y":348}},{"id":"K","name":"TWY K","metersFromRef":509,"labelPoint":{"x":574,"y":448}},{"id":"J","name":"TWY J","metersFromRef":1282,"labelPoint":{"x":615,"y":690}}],"endFeatures":{"20":{"displacedThresholdM":0,"stopwayM":0,"clearwayM":0},"02":{"displacedThresholdM":0,"stopwayM":0,"clearwayM":0}}}]},"SBGL":{"id":"SBGL_DRAFT_20260407_093227","code":"SBGL","name":"Rio de Janeiro / Galeão - Antônio Carlos Jobim, INTL","city":"RJ - Brasil","adcTitle":"SBGL ADC 05 SEP 24","engineId":"adc_sbgl_v1","stability":"draft","locked":false,"schemaVersion":5,"defaultChartId":"ADC_MAIN","defaultRunwayId":"RWY_10_28","charts":[{"id":"ADC_MAIN","label":"ADC principal","asset":"sbgl_chart_p1.png","assetName":"sbgl_chart_p1.png","size":{"width":863,"height":1300}}],"runways":[{"id":"RWY_10_28","label":"10/28","chartId":"ADC_MAIN","referenceEnd":"28","ends":["10","28"],"lengthM":4000,"widthM":45,"widthPx":27,"pavementRef":{"x":120.53,"y":304.08},"pavementOpp":{"x":282.04,"y":885.64},"thresholdRef":{"x":120.53,"y":304.08},"thresholdOpp":{"x":282.04,"y":885.64},"declaredDistances":{"10":{"tora":4000,"toda":4000,"asda":4000,"lda":4000},"28":{"tora":4000,"toda":4000,"asda":4000,"lda":4000}},"intersections":[{"id":"DD","name":"TWY DD","metersFromRef":1329,"labelPoint":{"x":187,"y":523}},{"id":"CC","name":"TWY CC","metersFromRef":1750,"labelPoint":{"x":196,"y":585}},{"id":"BB","name":"TWY BB","metersFromRef":2269,"labelPoint":{"x":224,"y":656}},{"id":"AA","name":"TWY AA","metersFromRef":2679,"labelPoint":{"x":243,"y":713}}]},{"id":"RWY_15_33","label":"15/33","chartId":"ADC_MAIN","referenceEnd":"33","ends":["15","33"],"lengthM":3180,"widthM":47,"widthPx":27,"pavementRef":{"x":736.85,"y":627.45},"pavementOpp":{"x":459.22,"y":1016.41},"thresholdRef":{"x":727.36,"y":642.96},"thresholdOpp":{"x":470.08,"y":1001.68},"declaredDistances":{"15":{"tora":3060,"toda":3180,"asda":3060,"lda":2930},"33":{"tora":3050,"toda":3180,"asda":3050,"lda":2930}},"intersections":[{"id":"J","name":"TWY J","metersFromRef":460,"labelPoint":{"x":650,"y":690}},{"id":"E","name":"TWY E","metersFromRef":1057,"labelPoint":{"x":617,"y":743}},{"id":"D","name":"TWY D","metersFromRef":1629,"labelPoint":{"x":487,"y":933}}],"endFeatures":{"15":{"displacedThresholdM":0,"stopwayM":0,"clearwayM":0},"33":{"displacedThresholdM":0,"stopwayM":0,"clearwayM":0}}}]},"SBRJ":{"id":"SBRJ","code":"SBRJ","name":"Rio de Janeiro / Santos Dumont","city":"RJ - Brasil","adcTitle":"SBRJ ADC 27 NOV 25","engineId":"adc_sbrj_v1","stability":"draft","locked":true,"schemaVersion":5,"defaultChartId":"ADC_MAIN","defaultRunwayId":"RWY_02L_20R","charts":[{"id":"ADC_MAIN","label":"ADC principal","asset":"sbrj_chart_p1.png","assetName":"sbrj_chart_p1.png","size":{"width":863,"height":1300}}],"runways":[{"id":"RWY_02L_20R","label":"02L/20R","chartId":"ADC_MAIN","referenceEnd":"20R","ends":["02L","20R"],"lengthM":1260,"widthM":30,"widthPx":24,"pavementRef":{"x":368.82,"y":314.92},"pavementOpp":{"x":402.57,"y":1056.19},"thresholdRef":{"x":368.82,"y":314.92},"thresholdOpp":{"x":402.57,"y":1056.19},"declaredDistances":{"02L":{"tora":1260,"toda":1260,"asda":1260,"lda":1260},"20R":{"tora":1260,"toda":1260,"asda":1260,"lda":1260}},"intersections":[{"id":"B","name":"TWY B","metersFromRef":377,"labelPoint":{"x":365,"y":543}},{"id":"C","name":"TWY C","metersFromRef":973,"labelPoint":{"x":398,"y":955}},{"id":"D","name":"TWY D","metersFromRef":1182,"labelPoint":{"x":392,"y":1063}}],"endFeatures":{"02L":{"displacedThresholdM":0,"stopwayM":0,"clearwayM":0},"20R":{"displacedThresholdM":0,"stopwayM":0,"clearwayM":0}}},{"id":"RWY_02R_20L","label":"02R/20L","chartId":"ADC_MAIN","referenceEnd":"20L","ends":["02R","20L"],"lengthM":1323,"widthM":42,"widthPx":30,"pavementRef":{"x":413.42,"y":311.31},"pavementOpp":{"x":449.58,"y":1090.54},"thresholdRef":{"x":413.42,"y":311.31},"thresholdOpp":{"x":449.58,"y":1090.54},"declaredDistances":{"02R":{"tora":1323,"toda":1323,"asda":1323,"lda":1323},"20L":{"tora":1323,"toda":1323,"asda":1323,"lda":1323}},"intersections":[{"id":"H","name":"TWY H","metersFromRef":379,"labelPoint":{"x":410,"y":543}},{"id":"G","name":"TWY G","metersFromRef":972,"labelPoint":{"x":432,"y":957}},{"id":"F","name":"TWY F","metersFromRef":1176,"labelPoint":{"x":439,"y":1061}}],"endFeatures":{"02R":{"displacedThresholdM":0,"stopwayM":0,"clearwayM":0},"20L":{"displacedThresholdM":0,"stopwayM":0,"clearwayM":0}}}]},"SBJR":{"id":"SBJR","code":"SBJR","name":"Rio de Janeiro / Jacarepaguá - Roberto Marinho","city":"RJ - Brasil","adcTitle":"SBJR ADC 27 NOV 25","engineId":"adc_sbjr_v1","stability":"draft","locked":false,"schemaVersion":5,"defaultChartId":"ADC_MAIN","defaultRunwayId":"RWY_03_21","charts":[{"id":"ADC_MAIN","label":"ADC principal","asset":"sbjr_chart_p1.png","assetName":"sbjr_chart_p1.png","size":{"width":863,"height":1300}}],"runways":[{"id":"RWY_03_21","label":"03/21","chartId":"ADC_MAIN","referenceEnd":"21","ends":["03","21"],"lengthM":900,"widthM":30,"widthPx":18,"pavementRef":{"x":344.33,"y":358.79},"pavementOpp":{"x":309,"y":995},"thresholdRef":{"x":344.33,"y":358.79},"thresholdOpp":{"x":309,"y":995},"declaredDistances":{"21":{"tora":900,"toda":900,"asda":900,"lda":900},"03":{"tora":900,"toda":900,"asda":900,"lda":900}},"intersections":[{"id":"D","name":"TWY D","metersFromRef":372,"labelPoint":{"x":364,"y":580}},{"id":"C","name":"TWY C","metersFromRef":549,"labelPoint":{"x":365.79,"y":751.14}}],"endFeatures":{"21":{"displacedThresholdM":0,"stopwayM":0,"clearwayM":0},"03":{"displacedThresholdM":0,"stopwayM":0,"clearwayM":0}}}]},"SBCB":{"id":"SBCB","code":"SBCB","name":"Cabo Frio / Cabo Frio, INTL","city":"RJ - Brasil","adcTitle":"SBCB ADC 16 JUN 22","engineId":"adc_sbcb_v1","stability":"draft","locked":true,"schemaVersion":5,"defaultChartId":"ADC_MAIN","defaultRunwayId":"RWY_10_28","charts":[{"id":"ADC_MAIN","label":"ADC principal","asset":"sbcb_chart_p1.png","assetName":"sbcb_chart_p1.png","size":{"width":863,"height":1300}}],"runways":[{"id":"RWY_10_28","label":"10/28","chartId":"ADC_MAIN","referenceEnd":"10","ends":["28","10"],"lengthM":2550,"widthM":45,"widthPx":29,"pavementRef":{"x":448.06,"y":208.19},"pavementOpp":{"x":652.07,"y":1153.82},"thresholdRef":{"x":454.4,"y":241.4},"thresholdOpp":{"x":643.63,"y":1120.07},"declaredDistances":{"10":{"tora":2460,"toda":2550,"asda":2460,"lda":2370},"28":{"tora":2460,"toda":2550,"asda":2460,"lda":2370}},"intersections":[{"id":"B","name":"TWY B","metersFromRef":421,"labelPoint":{"x":457,"y":377}}],"endFeatures":{"10":{"displacedThresholdM":0,"stopwayM":0,"clearwayM":0},"28":{"displacedThresholdM":0,"stopwayM":0,"clearwayM":0}}}]},"SBFS":{"id":"SBFS","code":"SBFS","name":"Campo dos Goytacazes / Farol de São Tomé","city":"RJ - Brasil","adcTitle":"SBFS ADC 19 FEB 26","engineId":"adc_sbfs_v1","stability":"draft","locked":true,"schemaVersion":5,"defaultChartId":"ADC_MAIN","defaultRunwayId":"RWY_15_33","charts":[{"id":"ADC_MAIN","label":"ADC principal","asset":"sbfs_chart_p1.png","assetName":"sbfs_chart_p1.png","size":{"width":863,"height":1300}}],"runways":[{"id":"RWY_15_33","label":"15/33","chartId":"ADC_MAIN","referenceEnd":"15","ends":["33","15"],"lengthM":580,"widthM":31.5,"widthPx":24,"pavementRef":{"x":208.82,"y":544.88},"pavementOpp":{"x":684.03,"y":855.5},"thresholdRef":{"x":208.82,"y":544.88},"thresholdOpp":{"x":684.03,"y":855.5},"declaredDistances":{"15":{"tora":580,"toda":580,"asda":580,"lda":580},"33":{"tora":580,"toda":580,"asda":580,"lda":580}},"intersections":[{"id":"A","name":"TWY A","metersFromRef":291,"labelPoint":{"x":475,"y":649}}],"endFeatures":{"15":{"displacedThresholdM":0,"stopwayM":0,"clearwayM":0},"33":{"displacedThresholdM":0,"stopwayM":0,"clearwayM":0}}}]},"SBMI":{"id":"SBMI","code":"SBMI","name":"Maricá / Maricá","city":"RJ - Brasil","adcTitle":"SBMI ADC / AVOP 2026","engineId":"adc_sbmi_v1","stability":"stable","locked":true,"schemaVersion":6,"defaultChartId":"ADC_MAIN","defaultRunwayId":"RWY_09_27","charts":[{"id":"ADC_MAIN","label":"ADC principal","asset":"sbmi_chart_p1.png","assetName":"sbmi_chart_p1.png","size":{"width":3308,"height":4678}}],"runways":[{"id":"RWY_09_27","label":"09/27","chartId":"ADC_MAIN","referenceEnd":"27","ends":["09","27"],"lengthM":1190,"widthM":30,"widthPx":26,"pavementRef":{"x":2427.49,"y":3617.34},"pavementOpp":{"x":1335.21,"y":943.73},"thresholdRef":{"x":2351.64,"y":3431.66},"thresholdOpp":{"x":1575.46,"y":1530.48},"declaredDistances":{"27":{"tora":900,"toda":900,"asda":900,"lda":900},"09":{"tora":1110,"toda":1110,"asda":1190,"lda":930}},"intersections":[{"id":"A","name":"TWY A","metersFromRef":375,"labelPoint":{"x":1960,"y":2780}},{"id":"C","name":"TWY C","metersFromRef":621,"labelPoint":{"x":1845,"y":2315}}],"endFeatures":{"27":{"displacedThresholdM":80,"stopwayM":0,"clearwayM":0,"operationalStartM":290},"09":{"displacedThresholdM":260,"stopwayM":0,"clearwayM":0,"operationalStartM":0}}}]}};
     const ENGINE_REGISTRY = {
@@ -219,7 +218,7 @@ const GEOM_KEY = 'aw139_adc_geometry_v49';
         currentRunwayId: state.currentRunwayId,
         departureEnd: state.departureEnd,
         rto: document.getElementById('rtoInput')?.value || '',
-        vizPage: 'P1',
+        vizPage: state.vizPage || 'P1',
         advancedOpen: document.getElementById('advancedToggle')?.checked || false
       };
       localStorage.setItem(STATE_KEY, JSON.stringify(payload));
@@ -313,7 +312,7 @@ const GEOM_KEY = 'aw139_adc_geometry_v49';
       return pack;
     }
 
-    const PAGE2_ASSETS = {};
+    const PAGE2_ASSETS = {"SBCB":{"asset":"sbcb_chart_p2.png","label":"ADC pág. 2","size":{"width":2484,"height":3742}},"SBFS":{"asset":"sbfs_chart_p2.png","label":"ADC pág. 2","size":{"width":2484,"height":3742}},"SBGL":{"asset":"sbgl_chart_p2.png","label":"ADC pág. 2","size":{"width":2484,"height":3742}},"SBJR":{"asset":"sbjr_chart_p2.png","label":"ADC pág. 2","size":{"width":2484,"height":3742}},"SBME":{"asset":"sbme_chart_p2.png","label":"ADC pág. 2","size":{"width":2484,"height":3742}},"SBNF":{"asset":"sbnf_chart_p2.png","label":"ADC pág. 2","size":{"width":2484,"height":3742}},"SBRJ":{"asset":"sbrj_chart_p2.png","label":"ADC pág. 2","size":{"width":2484,"height":3742}},"SBVT":{"asset":"sbvt_chart_p2.png","label":"ADC pág. 2","size":{"width":2484,"height":3742}},"SBMI":{"asset":"sbmi_chart_p2.png","label":"ADC pág. 2","size":{"width":3308,"height":4678}}};
 
     let baseLibrary = Object.fromEntries(Object.entries(mergedLibrary()).map(([id, pack]) => [id, normalizeBasePack(pack)]));
     const currentGeometry = loadGeometry();
@@ -383,10 +382,11 @@ const GEOM_KEY = 'aw139_adc_geometry_v49';
       };
     }
     function currentDisplayChart(base = currentBase(), runway = currentRunway(base)) {
+      if (state.vizPage === 'P2') return page2Chart(base) || currentChart(base, runway);
       return currentChart(base, runway);
     }
     function hasPage2(base = currentBase()) {
-      return false;
+      return !!page2Chart(base);
     }
     function currentOppositeEnd(runway = currentRunway()) {
       return runway.ends.find(e => e !== runway.referenceEnd) || runway.ends[0];
@@ -778,7 +778,7 @@ const GEOM_KEY = 'aw139_adc_geometry_v49';
       if (btn2) btn2.classList.toggle('active', state.vizPage === 'P2');
     }
     function setVizPage(page) {
-      const next = 'P1';
+      const next = page === 'P2' && hasPage2(currentBase()) ? 'P2' : 'P1';
       state.vizPage = next;
       if (next === 'P2' && state.captureMode) setCaptureMode(false);
       renderChartPageControls();
@@ -1874,18 +1874,9 @@ const GEOM_KEY = 'aw139_adc_geometry_v49';
     }
 
     async function analyzeFromBridge(ctx = {}) {
-      const rawDeparture = ctx.departureEnd != null ? String(ctx.departureEnd) : '';
       if (ctx.baseId) state.currentBaseId = String(ctx.baseId);
       if (ctx.runwayId) state.currentRunwayId = String(ctx.runwayId);
-      if (rawDeparture) {
-        if (rawDeparture.includes('::')) {
-          const [rwId, dep] = rawDeparture.split('::');
-          if (rwId) state.currentRunwayId = rwId;
-          if (dep) state.departureEnd = dep;
-        } else {
-          state.departureEnd = rawDeparture;
-        }
-      }
+      if (ctx.departureEnd) state.departureEnd = String(ctx.departureEnd);
       refreshBaseOptions();
       refreshDepartureOptions();
       const token = `${state.currentRunwayId}::${state.departureEnd}`;
@@ -1908,7 +1899,7 @@ const GEOM_KEY = 'aw139_adc_geometry_v49';
         currentBaseId: state.currentBaseId,
         currentRunwayId: state.currentRunwayId,
         departureEnd: state.departureEnd,
-        vizPage: 'P1'
+        vizPage: state.vizPage
       })
     };
 
@@ -1984,8 +1975,6 @@ window.addEventListener('resize', resizeCanvas);
     document.getElementById('resetDeclaredBtn').addEventListener('click', resetDeclaredInputs);
 
     const chartCloseBtn = document.getElementById('chartCloseBtn');
-    const appbarHomeBtn = document.querySelector('.appbar-home');
-    const appbarTitleEl = document.querySelector('.appbar-title');
     function toggleChartFullscreen(force) {
       const on = force == null ? !document.body.classList.contains('body-fullscreen') : !!force;
       document.body.classList.toggle('body-fullscreen', on);
@@ -2004,19 +1993,11 @@ window.addEventListener('resize', resizeCanvas);
         return;
       }
       if (e.target === chartCloseBtn) return;
-      if (document.body.classList.contains('body-fullscreen')) {
-        toggleChartFullscreen(false);
-        return;
-      }
-      toggleChartFullscreen(true);
+      if (!document.body.classList.contains('body-fullscreen')) toggleChartFullscreen(true);
     });
     chartCloseBtn.addEventListener('click', e => { e.stopPropagation(); toggleChartFullscreen(false); });
-    appbarHomeBtn?.addEventListener('click', (e) => { e.stopPropagation(); const ret = new URLSearchParams(location.search).get('return'); location.href = '../index.html'; });
-    appbarTitleEl?.addEventListener('click', (e) => { e.stopPropagation(); const ret = new URLSearchParams(location.search).get('return'); if (ret) location.href = ret; else if (history.length > 1) history.back(); else location.href = '../index.html'; });
-    appbarHomeBtn && (appbarHomeBtn.style.cursor = 'pointer');
-    appbarTitleEl && (appbarTitleEl.style.cursor = 'pointer');
     document.getElementById('page1Btn').addEventListener('click', e => { e.stopPropagation(); setVizPage('P1'); });
-    const __page2Btn = document.getElementById('page2Btn'); if (__page2Btn) __page2Btn.addEventListener('click', e => { e.stopPropagation(); setVizPage('P1'); });
+    document.getElementById('page2Btn').addEventListener('click', e => { e.stopPropagation(); setVizPage('P2'); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') toggleChartFullscreen(false); });
 
     const advancedToggle = document.getElementById('advancedToggle');
