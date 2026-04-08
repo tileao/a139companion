@@ -105,11 +105,13 @@ function drawLabeledBox(ctx, x, y, lines, ok = true, opts = {}) {
   ctx.restore();
   return { x: boxX, y: boxY, w: width, h: height };
 }
+
 async function renderAdcPreviewToCanvas(out) {
   const payload = adcPreviewState.payload;
-  if (!payload?.chart?.src || !payload?.runway) return false;
+  if (!payload?.chart?.src) return false;
   const img = await loadImage(payload.chart.src);
   if (!img) return false;
+
   const width = img.naturalWidth || payload.chart.size?.width || 1000;
   const height = img.naturalHeight || payload.chart.size?.height || 1400;
   out.width = width;
@@ -117,59 +119,66 @@ async function renderAdcPreviewToCanvas(out) {
   const ctx = out.getContext('2d');
   ctx.clearRect(0, 0, width, height);
   ctx.drawImage(img, 0, 0, width, height);
-  const rows = payload.analysis?.rows || [];
-  const gatePoint = pointAlongRunway(payload.runway, payload.analysis?.gateMetersFromRef || 0);
+
+  const rows = Array.isArray(payload.analysis?.rows) ? payload.analysis.rows : [];
+  const fullRow = rows.find(row => row.id === 'FULL') || rows[0] || null;
+
+  const runway = payload.runway || null;
+  const pointFromRow = (row) => {
+    if (row?.labelPoint && Number.isFinite(row.labelPoint.x) && Number.isFinite(row.labelPoint.y)) return row.labelPoint;
+    if (runway && row?.metersFromRef != null) return pointAlongRunway(runway, row.metersFromRef || 0);
+    return null;
+  };
+
+  const rtoMeters = Math.round(Number(payload.rto || 0));
+  const gatePoint = pointFromRow(fullRow)
+    || (runway && payload.analysis?.gateMetersFromRef != null ? pointAlongRunway(runway, payload.analysis.gateMetersFromRef || 0) : null)
+    || { x: width * 0.18, y: height * 0.28 };
+
+  const axisLabel = String(payload.departureEnd || fullRow?.name || '').trim();
+  const rtoBox = drawLabeledBox(ctx, 56, Math.max(56, gatePoint.y - 34), ['RTO', `${rtoMeters} m`], true);
   ctx.save();
-  ctx.lineWidth = 5;
   ctx.strokeStyle = '#7CFC00';
-  ctx.fillStyle = '#7CFC00';
-  const start = payload.runway.pavementRef || payload.runway.thresholdRef;
-  const end = payload.runway.pavementOpp || payload.runway.thresholdOpp;
-  if (start && end) {
-    ctx.beginPath();
-    ctx.moveTo(start.x, start.y);
-    ctx.lineTo(end.x, end.y);
-    ctx.stroke();
-  }
-  ctx.beginPath();
-  ctx.arc(gatePoint.x, gatePoint.y, 7, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-  // RTO label on left
-  const rtoText = `${Math.round(payload.rto || 0)} m`;
-  const rtoBox = drawLabeledBox(ctx, 50, Math.max(90, gatePoint.y - 30), ['RTO', rtoText], true);
-  ctx.save();
-  ctx.strokeStyle = '#7CFC00'; ctx.lineWidth = 4;
+  ctx.lineWidth = 4;
   ctx.beginPath();
   ctx.moveTo(rtoBox.x + rtoBox.w, rtoBox.y + rtoBox.h / 2);
-  ctx.lineTo(gatePoint.x - 10, gatePoint.y);
+  ctx.lineTo(gatePoint.x - 8, gatePoint.y);
   ctx.stroke();
   ctx.restore();
+
   rows.forEach((row, idx) => {
-    const p = row.labelPoint || pointAlongRunway(payload.runway, row.metersFromRef || 0);
-    const isFull = idx === 0 || /pav|full|thr/i.test(String(row.name || ''));
-    const label = isFull ? String(payload.departureEnd || row.name || '').trim() : shortPointLabel(row.name || row.id || '');
-    const value = `${Math.round(row.availableAsda || 0)} m`;
-    const dx = p.x < width / 2 ? 26 : -150;
-    const dy = p.y < height / 2 ? -40 : 16;
-    const box = drawLabeledBox(ctx, p.x, p.y, [label, value], row.go !== false, { dx, dy });
+    const p = pointFromRow(row);
+    if (!p) return;
+    const isFull = row.id === 'FULL' || idx === 0;
+    const ok = row.go !== false;
+    const label = isFull ? (axisLabel || shortPointLabel(row.name || row.id || '')) : shortPointLabel(row.name || row.id || '');
+    const value = `${Math.round(Number(row.availableAsda || row.availableMeters || 0))} m`;
+    const sideRight = p.x < width * 0.55;
+    const dx = sideRight ? 22 : -154;
+    let dy = -36;
+    if (isFull) dy = p.y < height * 0.6 ? 18 : -52;
+    const box = drawLabeledBox(ctx, p.x, p.y, [label, value], ok, { dx, dy });
+
     ctx.save();
-    ctx.strokeStyle = row.go !== false ? '#7CFC00' : '#ef4444';
+    ctx.strokeStyle = ok ? '#7CFC00' : '#ef4444';
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.moveTo(p.x, p.y);
-    ctx.lineTo(dx >= 0 ? box.x : box.x + box.w, box.y + box.h / 2);
+    ctx.lineTo(sideRight ? box.x : box.x + box.w, box.y + box.h / 2);
     ctx.stroke();
     ctx.restore();
+
     ctx.save();
     ctx.fillStyle = isFull ? '#3dd9ff' : '#f59e0b';
     ctx.beginPath();
-    ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, isFull ? 9 : 8, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   });
+
   return true;
 }
+
 function setField(doc, id, value) {
   const el = doc.getElementById(id);
   if (!el) return false;
@@ -922,25 +931,6 @@ function syncViewerStageHeight(px = null) {
 async function renderPreview(mode) {
   const out = els.vizPreviewCanvas;
 
-  const source = getSourceCanvas(mode);
-  if (mode === 'adc' && source) {
-    const crop = getCanvasCrop(source, mode);
-    const stageWidth = Math.max(320, els.viewerPane.getBoundingClientRect().width - 2);
-    const scale = stageWidth / crop.w;
-    const displayHeight = Math.round(crop.h * scale);
-    out.width = crop.w;
-    out.height = crop.h;
-    out.style.width = stageWidth + 'px';
-    out.style.height = displayHeight + 'px';
-    const ctx = out.getContext('2d');
-    ctx.clearRect(0,0,out.width,out.height);
-    ctx.drawImage(source, crop.x, crop.y, crop.w, crop.h, 0, 0, crop.w, crop.h);
-    out.hidden = false;
-    out.dataset.mode = mode;
-    syncViewerStageHeight(displayHeight);
-    return true;
-  }
-
   if (mode === 'adc') {
     const ok = await renderAdcPreviewToCanvas(out);
     if (!ok) {
@@ -959,6 +949,7 @@ async function renderPreview(mode) {
     return true;
   }
 
+  const source = getSourceCanvas(mode);
   if (!source) {
     out.hidden = true;
     syncViewerStageHeight(null);
@@ -1031,15 +1022,6 @@ function drawFullscreenSource(mode) {
   }
 
   const source = getSourceCanvas(mode);
-  if (mode === 'adc' && source) {
-    const crop = getCanvasCrop(source, mode);
-    out.width = crop.w;
-    out.height = crop.h;
-    ctx.clearRect(0,0,out.width,out.height);
-    ctx.drawImage(source, crop.x, crop.y, crop.w, crop.h, 0, 0, crop.w, crop.h);
-    return true;
-  }
-
   if (!source) return false;
   const crop = getCanvasCrop(source, mode);
   out.width = crop.w;
