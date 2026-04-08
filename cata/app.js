@@ -47,6 +47,7 @@ const els = {
 function loadCtx() { try { return JSON.parse(localStorage.getItem(SHARED_KEY) || '{}'); } catch { return {}; } }
 function saveCtx(patch) { localStorage.setItem(SHARED_KEY, JSON.stringify({ ...loadCtx(), ...patch, updatedAt: new Date().toISOString(), lastModule: 'cata' })); }
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function parseDepartureToken(token) { const [runwayId, dep] = String(token || '').split('::'); return { runwayId, dep }; }
 
 async function loadImage(src) {
   if (!src) return null;
@@ -174,7 +175,9 @@ function setField(doc, id, value) {
   if (!el) return false;
   el.value = value ?? '';
   el.dispatchEvent(new Event('input', { bubbles: true }));
+  el.dispatchEvent(new Event('keyup', { bubbles: true }));
   el.dispatchEvent(new Event('change', { bubbles: true }));
+  try { el.blur(); } catch {}
   return true;
 }
 function setRadio(doc, name, value) {
@@ -307,28 +310,30 @@ async function syncDepartureOptionsFromAdc(preferred = null) {
   const doc = await waitForIframe(adcFrame, ['baseSelect', 'departureEndSelect']);
   const bridge = adcFrame.contentWindow?.__adcBridge;
   const baseId = els.base.value || doc.getElementById('baseSelect')?.value || '';
-  const desiredDeparture = preferred ?? (els.departure.value || null);
+  const desiredToken = preferred ?? (els.departure.value || null);
+  const parsed = parseDepartureToken(desiredToken || '');
   try {
     if (bridge?.analyzeFromBridge) {
       await bridge.analyzeFromBridge({
         baseId,
-        departureEnd: desiredDeparture || undefined,
+        runwayId: parsed.runwayId || undefined,
+        departureEnd: parsed.dep || undefined,
         rto: 0,
       });
     } else {
       setField(doc, 'baseSelect', baseId);
-      if (desiredDeparture) setField(doc, 'departureEndSelect', desiredDeparture);
+      if (desiredToken) setField(doc, 'departureEndSelect', desiredToken);
     }
   } catch {
     setField(doc, 'baseSelect', baseId);
-    if (desiredDeparture) setField(doc, 'departureEndSelect', desiredDeparture);
+    if (desiredToken) setField(doc, 'departureEndSelect', desiredToken);
   }
   await sleep(120);
   const depSelect = doc.getElementById('departureEndSelect');
   if (depSelect) {
     els.departure.innerHTML = depSelect.innerHTML;
     const options = [...els.departure.options].map(opt => opt.value);
-    els.departure.value = options.includes(desiredDeparture) ? desiredDeparture : depSelect.value;
+    els.departure.value = options.includes(desiredToken) ? desiredToken : depSelect.value;
   }
 }
 
@@ -492,9 +497,11 @@ async function runADC(input, rtoResult) {
   const doc = await waitForIframe(adcFrame, ['baseSelect', 'departureEndSelect', 'rtoInput', 'analyzeBtn', 'decisionTable']);
   const bridge = adcFrame.contentWindow?.__adcBridge;
   if (bridge?.analyzeFromBridge) {
+    const parsed = parseDepartureToken(input.departureEnd || '');
     const payload = await bridge.analyzeFromBridge({
       baseId: input.base,
-      departureEnd: input.departureEnd,
+      runwayId: parsed.runwayId || undefined,
+      departureEnd: parsed.dep || input.departureEnd,
       rto: rtoResult?.rtoMeters ?? 0,
     });
     if (payload?.chart?.src) {
