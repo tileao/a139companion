@@ -392,6 +392,20 @@ function restoreInputsFromContext() {
 
 async function runWAT(input) {
   const doc = await waitForIframe(watFrame, ['procedure', 'configuration', 'pressureAltitude', 'oat', 'actualWeight', 'headwind', 'runBtn', 'maxWeight', 'margin']);
+  const bridge = watFrame.contentWindow?.__watBridge;
+  if (bridge?.runFromBridge) {
+    const result = await bridge.runFromBridge({
+      aircraftSet: input.aircraftSet || '7000',
+      procedure: 'clear',
+      configuration: input.configuration,
+      pressureAltitudeFt: input.pressureAltitudeFt,
+      oatC: input.oatC,
+      weightKg: input.weightKg,
+      headwindKt: input.headwindKt,
+    });
+    pushSharedContext(input, { watMaxWeightKg: result.maxWeightKg, watMarginKg: result.marginKg });
+    return result;
+  }
   setRadio(doc, 'aircraftSet', input.aircraftSet || '6800');
   setField(doc, 'procedure', 'clear');
   setField(doc, 'configuration', input.configuration);
@@ -428,6 +442,20 @@ async function runWAT(input) {
 
 async function runRTO(input) {
   const doc = await waitForIframe(rtoFrame, ['configuration', 'pressureAltitude', 'oat', 'actualWeight', 'headwind', 'runBtn', 'finalMetric']);
+  const bridge = rtoFrame.contentWindow?.__rtoBridge;
+  const mappedConfig = mapRtoConfig(input.configuration);
+  if (bridge?.runFromBridge) {
+    const result = await bridge.runFromBridge({
+      configuration: mappedConfig,
+      pressureAltitudeFt: input.pressureAltitudeFt,
+      oatC: input.oatC,
+      weightKg: input.weightKg,
+      headwindKt: input.headwindKt,
+    });
+    pushSharedContext(input, { rtoMeters: result.rtoMeters });
+    return result;
+  }
+
   const metricEl = doc.getElementById('finalMetric');
   const metricFtEl = doc.getElementById('finalMetricFt');
   const statusDetailEl = doc.getElementById('statusDetail');
@@ -438,12 +466,9 @@ async function runRTO(input) {
   if (statusDetailEl) statusDetailEl.textContent = 'Recalculando…';
   if (statusTextEl) statusTextEl.textContent = 'Aguardando nova leitura.';
 
-  const mappedConfig = mapRtoConfig(input.configuration);
   setField(doc, 'configuration', mappedConfig);
   await waitForFieldValue(doc, 'configuration', mappedConfig, 3500);
-  try {
-    await doc.defaultView?.ensureEffectiveProfileLoaded?.({ preserveInputs: true, autoRun: false });
-  } catch {}
+  try { await doc.defaultView?.ensureEffectiveProfileLoaded?.({ preserveInputs: true, autoRun: false }); } catch {}
   await waitForNoPendingRto(doc, 2500);
   try { await doc.defaultView?.clearResultsOnly?.(); } catch {}
 
@@ -496,19 +521,23 @@ async function runRTO(input) {
 async function runADC(input, rtoResult) {
   const doc = await waitForIframe(adcFrame, ['baseSelect', 'departureEndSelect', 'rtoInput', 'analyzeBtn', 'decisionTable']);
   const bridge = adcFrame.contentWindow?.__adcBridge;
+  const parsed = parseDepartureToken(input.departureEnd || '');
   if (bridge?.analyzeFromBridge) {
-    const parsed = parseDepartureToken(input.departureEnd || '');
     const payload = await bridge.analyzeFromBridge({
       baseId: input.base,
       runwayId: parsed.runwayId || undefined,
       departureEnd: parsed.dep || input.departureEnd,
       rto: rtoResult?.rtoMeters ?? 0,
     });
-    if (payload?.chart?.src) {
-      try { payload.chart.src = new URL(payload.chart.src, adcFrame.contentWindow.location.href).href; } catch {}
+    const finalPayload = (payload?.analysis?.rows?.length ? payload : null) || await waitForTruthy(() => {
+      const p = bridge.getPayload?.();
+      return p?.analysis?.rows?.length ? p : null;
+    }, 2500) || payload;
+    if (finalPayload?.chart?.src) {
+      try { finalPayload.chart.src = new URL(finalPayload.chart.src, adcFrame.contentWindow.location.href).href; } catch {}
     }
-    adcPreviewState.payload = payload;
-    const rows = (payload?.analysis?.rows || []).map(row => ({
+    adcPreviewState.payload = finalPayload;
+    const rows = (finalPayload?.analysis?.rows || []).map(row => ({
       id: row.id || '',
       point: row.name,
       rtoOk: row.rtoOk ? 'OK' : 'NO',
@@ -522,9 +551,9 @@ async function runADC(input, rtoResult) {
       gateText: fullRow ? `${Math.round(fullRow.availableAsda)} m` : '—',
       fullText: fullRow ? `${Math.round(fullRow.availableAsda)} m` : '—',
       rows,
-      basisMetric: payload?.analysis?.basisMetric || payload?.analysis?.meta?.basisMetric || 'ASDA',
-      primaryPoint: payload?.analysis?.meta?.startLabel || fullRow?.point || input?.departureEnd || '',
-      payload
+      basisMetric: finalPayload?.analysis?.basisMetric || finalPayload?.analysis?.meta?.basisMetric || 'ASDA',
+      primaryPoint: finalPayload?.analysis?.meta?.startLabel || fullRow?.point || input?.departureEnd || '',
+      payload: finalPayload
     };
   }
 
@@ -894,24 +923,6 @@ async function renderPreview(mode) {
   const out = els.vizPreviewCanvas;
 
   if (mode === 'adc') {
-    const source = getSourceCanvas('adc');
-    if (source) {
-      const crop = getCanvasCrop(source, mode);
-      const stageWidth = Math.max(320, els.viewerPane.getBoundingClientRect().width - 2);
-      const scale = stageWidth / crop.w;
-      const displayHeight = Math.round(crop.h * scale);
-      out.width = crop.w;
-      out.height = crop.h;
-      out.style.width = stageWidth + 'px';
-      out.style.height = displayHeight + 'px';
-      const ctx = out.getContext('2d');
-      ctx.clearRect(0, 0, out.width, out.height);
-      ctx.drawImage(source, crop.x, crop.y, crop.w, crop.h, 0, 0, crop.w, crop.h);
-      out.hidden = false;
-      out.dataset.mode = mode;
-      syncViewerStageHeight(displayHeight);
-      return true;
-    }
     const ok = await renderAdcPreviewToCanvas(out);
     if (!ok) {
       out.hidden = true;
@@ -999,6 +1010,10 @@ function drawFullscreenSource(mode) {
     ctx.clearRect(0, 0, out.width, out.height);
     ctx.drawImage(preview, 0, 0, preview.width, preview.height, 0, 0, preview.width, preview.height);
     return true;
+  }
+
+  if (mode === 'adc') {
+    return false;
   }
 
   const source = getSourceCanvas(mode);
@@ -1160,8 +1175,7 @@ async function runFlow() {
   els.statusChip.className = 'status-chip warn';
   els.resultCard.classList.remove('result-ok', 'result-bad');
   try {
-    const wat = await runWAT(input);
-    const rto = await runRTO(input);
+    const [wat, rto] = await Promise.all([runWAT(input), runRTO(input)]);
     const adc = await runADC(input, rto);
     renderResults(wat, rto, adc);
     setVisualization(els.visualSelect.value || 'adc');

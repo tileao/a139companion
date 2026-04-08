@@ -1984,6 +1984,8 @@ window.addEventListener('resize', resizeCanvas);
     document.getElementById('resetDeclaredBtn').addEventListener('click', resetDeclaredInputs);
 
     const chartCloseBtn = document.getElementById('chartCloseBtn');
+    const appbarHomeBtn = document.querySelector('.appbar-home');
+    const appbarTitleEl = document.querySelector('.appbar-title');
     function toggleChartFullscreen(force) {
       const on = force == null ? !document.body.classList.contains('body-fullscreen') : !!force;
       document.body.classList.toggle('body-fullscreen', on);
@@ -2009,6 +2011,10 @@ window.addEventListener('resize', resizeCanvas);
       toggleChartFullscreen(true);
     });
     chartCloseBtn.addEventListener('click', e => { e.stopPropagation(); toggleChartFullscreen(false); });
+    appbarHomeBtn?.addEventListener('click', (e) => { e.stopPropagation(); const ret = new URLSearchParams(location.search).get('return'); location.href = '../index.html'; });
+    appbarTitleEl?.addEventListener('click', (e) => { e.stopPropagation(); const ret = new URLSearchParams(location.search).get('return'); if (ret) location.href = ret; else if (history.length > 1) history.back(); else location.href = '../index.html'; });
+    appbarHomeBtn && (appbarHomeBtn.style.cursor = 'pointer');
+    appbarTitleEl && (appbarTitleEl.style.cursor = 'pointer');
     document.getElementById('page1Btn').addEventListener('click', e => { e.stopPropagation(); setVizPage('P1'); });
     document.getElementById('page2Btn').addEventListener('click', e => { e.stopPropagation(); setVizPage('P2'); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') toggleChartFullscreen(false); });
