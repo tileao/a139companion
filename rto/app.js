@@ -32,8 +32,7 @@ const interpBox = document.getElementById('interpBox');
 
 const BASE_PAGE_WIDTH = 842;
 const BASE_PAGE_HEIGHT = 595;
-const BUILD_LABEL = 'BUILD V65 • IBF 7000 left OAT micro-drop';
-const BUILD_CACHE_KEY = 'v65';
+const BUILD_LABEL = 'BUILD V39 • standard auto-switch 6800/7000 + unified Rev. 32 source';
 
 const state = {
   engine: null,
@@ -67,26 +66,10 @@ function applyAdaptiveLayout() {
   if (tabletDashboard) toggleChartVisibility(true);
 }
 
-function isReferenceOnlyEngine(engine = state.engine) {
-  return !!engine && engine.status === 'reference-assets-staged-only';
-}
-
 function resolveEffectiveProfileKey(profileKey, weightKg = parseUnsignedField(weightEl)) {
   if (profileKey === 'standard') {
     if (Number.isFinite(weightKg) && weightKg > 6800) return 'standard7000';
     return 'standard';
-  }
-  if (profileKey === 'eapsOff') {
-    if (Number.isFinite(weightKg) && weightKg > 6800) return 'eapsOff7000';
-    return 'eapsOff';
-  }
-  if (profileKey === 'eapsOn') {
-    if (Number.isFinite(weightKg) && weightKg > 6800) return 'eapsOn7000';
-    return 'eapsOn';
-  }
-  if (profileKey === 'ibfInstalled') {
-    if (Number.isFinite(weightKg) && weightKg > 6800) return 'ibfInstalled7000';
-    return 'ibfInstalled';
   }
   return profileKey;
 }
@@ -102,13 +85,13 @@ async function ensureEffectiveProfileLoaded({ preserveInputs = true, autoRun = f
   await loadProfile(state.profileKey, { preserveInputs, autoRun, effectiveWeightKg: parseUnsignedField(weightEl) });
 }
 
-async function refreshWeightSensitiveProfileIfNeeded() {
-  if (!['standard', 'eapsOff', 'eapsOn', 'ibfInstalled'].includes(state.profileKey)) return;
+async function refreshStandardProfileIfNeeded() {
+  if (state.profileKey !== 'standard') return;
   const digits = digitsOnlyLength(weightEl);
   if (digits < 4) return;
-  const desiredProfileKey = resolveEffectiveProfileKey(state.profileKey, parseUnsignedField(weightEl));
+  const desiredProfileKey = resolveEffectiveProfileKey('standard', parseUnsignedField(weightEl));
   if (state.activeProfileKey === desiredProfileKey) return;
-  await loadProfile(state.profileKey, { preserveInputs: true, autoRun: false, effectiveWeightKg: parseUnsignedField(weightEl) });
+  await loadProfile('standard', { preserveInputs: true, autoRun: false, effectiveWeightKg: parseUnsignedField(weightEl) });
 }
 
 const profiles = {
@@ -122,30 +105,15 @@ const profiles = {
     json: 'data/figure_4_56_engine_data.json',
     image: 'docs/page_s50_89_figure_4_56.png',
   },
-  eapsOff7000: {
-    label: '7000 EAPS OFF',
-    json: 'data/figure_4_94_engine_data.json',
-    image: 'docs/page_s90_127_figure_4_94.png',
-  },
   eapsOn: {
     label: 'EAPS ON',
     json: 'data/figure_4_58_engine_data.json',
     image: 'docs/page_s50_93_figure_4_58.png',
   },
-  eapsOn7000: {
-    label: '7000 EAPS ON',
-    json: 'data/figure_4_96_engine_data.json',
-    image: 'docs/page_s90_131_figure_4_96.png',
-  },
   ibfInstalled: {
     label: 'IBF Installed',
     json: 'data/figure_4_68a_engine_data.json',
     image: 'docs/page_s50_108a_figure_4_68a.png',
-  },
-  ibfInstalled7000: {
-    label: '7000 IBF Installed',
-    json: 'data/figure_4_98_engine_data.json',
-    image: 'docs/page_s90_135_figure_4_98.png',
   },
   standard7000: {
     label: '7000 Standard',
@@ -820,17 +788,6 @@ function showSuccess(result) {
   `;
 }
 
-function showReferencePending() {
-  state.currentResult = null;
-  setMetricsEmpty();
-  const src = state.engine?.source || {};
-  const confLabel = getSelectedConfigurationLabel();
-  interpBox.innerHTML = `Visualização da Figure ${src.figure || '—'} pronta para auditoria. A engine deste perfil ainda está sendo reconstruída do zero.`;
-  setStatus('neutral', 'REFERÊNCIA', `Engine Figure ${src.figure || '—'} pendente`, 'Visualização correta carregada.', `Cálculo temporariamente desabilitado para ${confLabel} acima de 6800 kg.`);
-  drawOverlay(null);
-}
-
-
 function showError(message, kind = 'warn') {
   setMetricsEmpty();
   interpBox.textContent = 'Sem cálculo válido para os dados informados.';
@@ -853,10 +810,6 @@ async function runCalculation({ skipEnsureProfile = false } = {}) {
     }
   }
   if (!state.engine) return;
-  if (isReferenceOnlyEngine()) {
-    showReferencePending();
-    return;
-  }
   const payload = {
     paFt: parseSignedField(paEl),
     oatC: parseSignedField(oatEl),
@@ -897,11 +850,7 @@ function clearResultsOnly() {
   setMetricsEmpty();
   interpBox.textContent = 'Sem cálculo ainda.';
   const figure = state.engine?.source?.figure || '—';
-  if (isReferenceOnlyEngine()) {
-    setStatus('neutral', 'REFERÊNCIA', `RTO Figure ${figure}`, 'Visualização correta carregada.', 'Engine pendente para este perfil acima de 6800 kg.');
-  } else {
-    setStatus('neutral', 'AGUARDANDO DADOS', `RTO Figure ${figure}`, 'Fator de correção: —', 'Preencha os campos e execute o cálculo.');
-  }
+  setStatus('neutral', 'AGUARDANDO DADOS', `RTO Figure ${figure}`, 'Fator de correção: —', 'Preencha os campos e execute o cálculo.');
   drawOverlay(null);
 }
 
@@ -927,35 +876,16 @@ function updateProfileTexts() {
   if (!src) return;
   if (subtitleEl) subtitleEl.textContent = `Reject Take Off Distance — Supplement ${src.supplement} — Figure ${src.figure}`;
   if (buildVersionEl) buildVersionEl.textContent = BUILD_LABEL;
+  const paRange = state.engine.panels.left.pressure_altitude_ft;
   const confLabel = getSelectedConfigurationLabel();
-  const standardRule = state.profileKey === 'standard'
+  const autoRule = state.profileKey === 'standard'
     ? ' Padrão Standard: até 6800 kg usa Supplement 50; acima de 6800 kg usa Supplement 90.'
-    : '';
-  const eapsOffRule = state.profileKey === 'eapsOff'
-    ? ' No EAPS OFF: até 6800 kg usa Supplement 50; acima de 6800 kg usa a Figure 4-94 do Supplement 90.'
-    : '';
-  const eapsOnRule = state.profileKey === 'eapsOn'
-    ? ' No EAPS ON: até 6800 kg usa Supplement 50; acima de 6800 kg usa a Figure 4-96 do Supplement 90.'
-    : '';
-  const ibfRule = state.profileKey === 'ibfInstalled'
-    ? ' No IBF Installed: até 6800 kg usa Supplement 50; acima de 6800 kg usa a Figure 4-98 do Supplement 90.'
     : '';
   const formHint = document.getElementById('formHint');
   if (formHint) {
-    if (isReferenceOnlyEngine()) {
-      formHint.textContent = `Escopo atual: Supplement ${src.supplement}, Figure ${src.figure}, ${confLabel}. Visualização correta pronta; engine ainda em reconstrução.${standardRule}${eapsOffRule}${eapsOnRule}${ibfRule}`;
-    } else {
-      const paRange = state.engine.panels.left.pressure_altitude_ft;
-      formHint.textContent = `Escopo atual: Supplement ${src.supplement}, Figure ${src.figure}, ${confLabel}. Faixa de PA = ${fmt(paRange.min, 0)} a ${fmt(paRange.max, 0)} ft.${standardRule}${eapsOffRule}${eapsOnRule}${ibfRule}`;
-    }
+    formHint.textContent = `Escopo atual: Supplement ${src.supplement}, Figure ${src.figure}, ${confLabel}. Faixa de PA = ${fmt(paRange.min, 0)} a ${fmt(paRange.max, 0)} ft.${autoRule}`;
   }
   chartReference.innerHTML = `<strong>Gráfico em uso:</strong> Figure ${src.figure} — ${src.title}.<br><strong>Suplemento:</strong> Supplement ${src.supplement}<br><strong>Página:</strong> ${src.page}<br><strong>Fonte:</strong> ${src.rfm_source}.`;
-  const chartHint = document.getElementById('chartHint');
-  if (chartHint) {
-    chartHint.textContent = isReferenceOnlyEngine()
-      ? `Página correta da Figure ${src.figure} carregada como referência limpa. O cálculo deste perfil ainda não foi religado.`
-      : 'Overlay direto sobre a página completa do RFM: altitude, curvas usadas no cálculo, transferência horizontal, leitura da distância e correção por headwind.';
-  }
 }
 
 async function loadProfile(profileKey, { preserveInputs = true, autoRun = true, effectiveWeightKg = null } = {}) {
@@ -973,7 +903,7 @@ async function loadProfile(profileKey, { preserveInputs = true, autoRun = true, 
   state.profileKey = profileKey;
   state.activeProfileKey = effectiveProfileKey;
   const [engine, image] = await Promise.all([
-    fetch(`${profile.json}?v=${BUILD_CACHE_KEY}`).then((r) => {
+    fetch(`${profile.json}?v=v39`).then((r) => {
       if (!r.ok) throw new Error(`Falha ao carregar ${profile.json}`);
       return r.json();
     }),
@@ -981,7 +911,7 @@ async function loadProfile(profileKey, { preserveInputs = true, autoRun = true, 
       const img = new Image();
       img.onload = () => resolve(img);
       img.onerror = () => reject(new Error(`Falha ao carregar ${profile.image}`));
-      img.src = `${profile.image}?v=${BUILD_CACHE_KEY}`;
+      img.src = `${profile.image}?v=v39`;
     }),
   ]);
 
@@ -1124,10 +1054,10 @@ async function init() {
   });
 
   weightEl.addEventListener('input', () => {
-    refreshWeightSensitiveProfileIfNeeded().catch(() => {});
+    refreshStandardProfileIfNeeded().catch(() => {});
   });
   weightEl.addEventListener('blur', () => {
-    refreshWeightSensitiveProfileIfNeeded().catch(() => {});
+    refreshStandardProfileIfNeeded().catch(() => {});
   });
 
   if ('serviceWorker' in navigator) {

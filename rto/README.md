@@ -49,18 +49,3 @@ Build v16
 
 
 Build v23: IBF center panel scale corrected to 0–20 m full-width on Figure 4-68A.
-
-
-## V48 clean restart baseline
-- Base restored from V39.
-- Figure 4-94 (S90-127) assets staged only as clean references.
-- No 4-94 engine or autoswitch wiring is active in this build.
-
-
-## V58
-- Enabled Figure 4-96 engine for EAPS ON above 6800 kg.
-
-
-## V59
-- Corrige a escala geométrica do painel central da Figure 4-96 para 0–20 [m x100].
-- Recalibra o alinhamento X dos painéis central e direito da Figure 4-96 (~1.8 px à esquerda).
