@@ -928,29 +928,67 @@ function syncViewerStageHeight(px = null) {
   els.vizWrap.style.minHeight = `${h}px`;
 }
 
-async function renderPreview(mode) {
-  const out = els.vizPreviewCanvas;
-
-  if (mode === 'adc') {
-    const ok = await renderAdcPreviewToCanvas(out);
-    if (!ok) {
-      out.hidden = true;
-      syncViewerStageHeight(null);
-      return false;
+function canvasLooksReady(source, mode = '') {
+  if (!source || !source.width || !source.height) return false;
+  try {
+    const sample = document.createElement('canvas');
+    const maxW = 320;
+    const scale = Math.min(1, maxW / source.width);
+    sample.width = Math.max(1, Math.round(source.width * scale));
+    sample.height = Math.max(1, Math.round(source.height * scale));
+    const sctx = sample.getContext('2d', { willReadFrequently: true });
+    sctx.drawImage(source, 0, 0, sample.width, sample.height);
+    const data = sctx.getImageData(0, 0, sample.width, sample.height).data;
+    let nonBg = 0;
+    let seen = 0;
+    for (let y = 0; y < sample.height; y += 8) {
+      for (let x = 0; x < sample.width; x += 8) {
+        const i = (y * sample.width + x) * 4;
+        const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+        seen++;
+        if (a < 8) continue;
+        const dark = r < 20 && g < 30 && b < 45;
+        const flatBlue = b > 140 && r > 80 && g < 120;
+        if (!dark && !(mode === 'adc' && flatBlue)) nonBg++;
+      }
     }
-    const stageWidth = Math.max(320, els.viewerPane.getBoundingClientRect().width - 2);
-    const scale = stageWidth / out.width;
-    const displayHeight = Math.round(out.height * scale);
-    out.style.width = stageWidth + 'px';
-    out.style.height = displayHeight + 'px';
-    out.hidden = false;
-    out.dataset.mode = mode;
-    syncViewerStageHeight(displayHeight);
+    return nonBg > Math.max(20, seen * 0.015);
+  } catch {
     return true;
   }
+}
 
-  const source = getSourceCanvas(mode);
+async function waitForCanvasReady(mode, timeoutMs = 5000) {
+  const end = Date.now() + timeoutMs;
+  while (Date.now() < end) {
+    const source = getSourceCanvas(mode);
+    if (canvasLooksReady(source, mode)) return source;
+    await sleep(80);
+  }
+  return getSourceCanvas(mode);
+}
+
+async function renderPreview(mode) {
+  const out = els.vizPreviewCanvas;
+  const source = await waitForCanvasReady(mode, mode === 'adc' ? 5000 : 2500);
   if (!source) {
+    if (mode === 'adc') {
+      const ok = await renderAdcPreviewToCanvas(out);
+      if (!ok) {
+        out.hidden = true;
+        syncViewerStageHeight(null);
+        return false;
+      }
+      const stageWidth = Math.max(320, els.viewerPane.getBoundingClientRect().width - 2);
+      const scale = stageWidth / out.width;
+      const displayHeight = Math.round(out.height * scale);
+      out.style.width = stageWidth + 'px';
+      out.style.height = displayHeight + 'px';
+      out.hidden = false;
+      out.dataset.mode = mode;
+      syncViewerStageHeight(displayHeight);
+      return true;
+    }
     out.hidden = true;
     syncViewerStageHeight(null);
     return false;
