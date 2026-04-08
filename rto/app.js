@@ -1130,7 +1130,56 @@ async function init() {
     refreshWeightSensitiveProfileIfNeeded().catch(() => {});
   });
 
-  if ('serviceWorker' in navigator) {
+  
+async function runFromBridge(ctx = {}) {
+  const config = String(ctx.configuration || configurationEl.value || 'standard');
+  const pa = ctx.paFt ?? ctx.pressureAltitudeFt ?? '';
+  const oat = ctx.oatC ?? '';
+  const weight = ctx.weightKg ?? '';
+  const wind = ctx.headwindKt ?? 0;
+
+  configurationEl.value = config;
+  try {
+    await loadProfile(config, { preserveInputs: true, autoRun: false, effectiveWeightKg: Number(weight || 0) });
+  } catch (error) {
+    showError(`Falha ao carregar o perfil: ${error.message}`, 'err');
+    throw error;
+  }
+
+  paEl.value = String(pa);
+  oatEl.value = String(oat);
+  weightEl.value = String(weight);
+  windEl.value = String(wind);
+  [paEl, oatEl, weightEl, windEl].forEach((el) => {
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    el.dispatchEvent(new Event('blur', { bubbles: true }));
+  });
+
+  try { await refreshWeightSensitiveProfileIfNeeded(); } catch {}
+  try { await ensureEffectiveProfileLoaded({ preserveInputs: true, autoRun: false }); } catch {}
+  await runCalculation();
+  return {
+    metricText: finalMetric.textContent || '—',
+    rtoMeters: Number(String(finalMetric.textContent || '').replace(/[^\d.,-]/g, '').replace(/\./g, '').replace(',', '.')) || 0,
+    summary: statusDetail.textContent || statusText.textContent || '',
+    activeProfileKey: state.activeProfileKey,
+    profileKey: state.profileKey,
+  };
+}
+
+window.__rtoBridge = {
+  runFromBridge,
+  getResult: () => ({
+    metricText: finalMetric.textContent || '—',
+    rtoMeters: Number(String(finalMetric.textContent || '').replace(/[^\d.,-]/g, '').replace(/\./g, '').replace(',', '.')) || 0,
+    summary: statusDetail.textContent || statusText.textContent || '',
+    activeProfileKey: state.activeProfileKey,
+    profileKey: state.profileKey,
+  })
+};
+
+if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
   }
 
