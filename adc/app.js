@@ -1993,7 +1993,11 @@ window.addEventListener('resize', resizeCanvas);
         return;
       }
       if (e.target === chartCloseBtn) return;
-      if (!document.body.classList.contains('body-fullscreen')) toggleChartFullscreen(true);
+      if (document.body.classList.contains('body-fullscreen')) {
+        toggleChartFullscreen(false);
+        return;
+      }
+      toggleChartFullscreen(true);
     });
     chartCloseBtn.addEventListener('click', e => { e.stopPropagation(); toggleChartFullscreen(false); });
     document.getElementById('page1Btn').addEventListener('click', e => { e.stopPropagation(); setVizPage('P1'); });

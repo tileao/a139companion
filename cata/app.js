@@ -303,14 +303,41 @@ async function waitForNoPendingRto(doc, timeoutMs = 4000) {
   return false;
 }
 
+async function syncDepartureOptionsFromAdc(preferred = null) {
+  const doc = await waitForIframe(adcFrame, ['baseSelect', 'departureEndSelect']);
+  const bridge = adcFrame.contentWindow?.__adcBridge;
+  const baseId = els.base.value || doc.getElementById('baseSelect')?.value || '';
+  const desiredDeparture = preferred ?? (els.departure.value || null);
+  try {
+    if (bridge?.analyzeFromBridge) {
+      await bridge.analyzeFromBridge({
+        baseId,
+        departureEnd: desiredDeparture || undefined,
+        rto: 0,
+      });
+    } else {
+      setField(doc, 'baseSelect', baseId);
+      if (desiredDeparture) setField(doc, 'departureEndSelect', desiredDeparture);
+    }
+  } catch {
+    setField(doc, 'baseSelect', baseId);
+    if (desiredDeparture) setField(doc, 'departureEndSelect', desiredDeparture);
+  }
+  await sleep(120);
+  const depSelect = doc.getElementById('departureEndSelect');
+  if (depSelect) {
+    els.departure.innerHTML = depSelect.innerHTML;
+    const options = [...els.departure.options].map(opt => opt.value);
+    els.departure.value = options.includes(desiredDeparture) ? desiredDeparture : depSelect.value;
+  }
+}
+
 async function populateBaseOptions() {
   const doc = await waitForIframe(adcFrame, ['baseSelect', 'departureEndSelect']);
   const baseSelect = doc.getElementById('baseSelect');
-  const depSelect = doc.getElementById('departureEndSelect');
   els.base.innerHTML = baseSelect.innerHTML;
-  els.departure.innerHTML = depSelect.innerHTML;
   if (!els.base.value) els.base.value = baseSelect.value;
-  if (!els.departure.value) els.departure.value = depSelect.value;
+  await syncDepartureOptionsFromAdc(null);
 }
 
 function collectInputs() {
@@ -470,6 +497,9 @@ async function runADC(input, rtoResult) {
       departureEnd: input.departureEnd,
       rto: rtoResult?.rtoMeters ?? 0,
     });
+    if (payload?.chart?.src) {
+      try { payload.chart.src = new URL(payload.chart.src, adcFrame.contentWindow.location.href).href; } catch {}
+    }
     adcPreviewState.payload = payload;
     const rows = (payload?.analysis?.rows || []).map(row => ({
       id: row.id || '',
@@ -857,6 +887,24 @@ async function renderPreview(mode) {
   const out = els.vizPreviewCanvas;
 
   if (mode === 'adc') {
+    const source = getSourceCanvas('adc');
+    if (source) {
+      const crop = getCanvasCrop(source, mode);
+      const stageWidth = Math.max(320, els.viewerPane.getBoundingClientRect().width - 2);
+      const scale = stageWidth / crop.w;
+      const displayHeight = Math.round(crop.h * scale);
+      out.width = crop.w;
+      out.height = crop.h;
+      out.style.width = stageWidth + 'px';
+      out.style.height = displayHeight + 'px';
+      const ctx = out.getContext('2d');
+      ctx.clearRect(0, 0, out.width, out.height);
+      ctx.drawImage(source, crop.x, crop.y, crop.w, crop.h, 0, 0, crop.w, crop.h);
+      out.hidden = false;
+      out.dataset.mode = mode;
+      syncViewerStageHeight(displayHeight);
+      return true;
+    }
     const ok = await renderAdcPreviewToCanvas(out);
     if (!ok) {
       out.hidden = true;
@@ -1041,7 +1089,7 @@ function setVisualization(mode, forceShow = true) {
   saveCtx({ cataVizMode: mode });
   els.vizSubtitle.textContent = mapVizLabel(mode);
   renderVisualizationMeta(mode);
-  const prep = mode === 'adc' ? Promise.resolve() : prepareEmbeddedView(mode);
+  const prep = prepareEmbeddedView(mode);
   prep.then(async () => {
     await sleep(mode === 'adc' ? 40 : 120);
     await renderPreview(mode);
@@ -1128,6 +1176,11 @@ function saveCurrentInputsForModuleOpen() {
 function bindEvents() {
   els.runBtn.addEventListener('click', runFlow);
   els.visualSelect.addEventListener('change', e => setVisualization(e.target.value, !!e.target.value));
+  els.base.addEventListener('change', async () => {
+    await syncDepartureOptionsFromAdc(null);
+    pushSharedContext(collectInputs());
+  });
+  els.departure.addEventListener('change', () => pushSharedContext(collectInputs()));
   document.querySelectorAll('.viewer-tab').forEach(btn => btn.addEventListener('click', () => setVisualization(btn.dataset.viz, true)));
   els.openWATBtn.addEventListener('click', () => {
     saveCurrentInputsForModuleOpen();
@@ -1226,6 +1279,7 @@ window.addEventListener('load', async () => {
     ]);
     await populateBaseOptions();
     restoreInputsFromContext();
+    await syncDepartureOptionsFromAdc(loadCtx().adcDepartureEnd || null);
     await Promise.all([prepareEmbeddedView('adc'), prepareEmbeddedView('wat'), prepareEmbeddedView('rto')]);
     if (els.visualSelect.value) setVisualization(els.visualSelect.value, true);
   } catch (error) {
