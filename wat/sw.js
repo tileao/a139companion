@@ -1,10 +1,10 @@
-const CACHE_NAME = 'aw139-wat-companion-v16-9-7-offshore-label-fix';
+const CACHE_NAME = 'wat6800-allprofiles-v16-6-6-minus-before-fields';
 const APP_ASSETS = [
   './',
   './index.html',
   './styles.css',
   './app.js',
-  './app.js?v=v16_9_7-offshore-label-fix',
+  './app.js?v=allprofiles-v16_6_6-minus-before-fields',
   './manifest.webmanifest',
   './README.md',
   './data/chart-schema.json',
@@ -43,30 +43,6 @@ const APP_ASSETS = [
   './docs/page-15.png',
   './docs/page-16.png',
   './docs/page-17.png',
-  './docs/wat7000.pdf',
-  './docs/page-18.png',
-  './docs/page-19.png',
-  './docs/page-20.png',
-  './docs/page-21.png',
-  './docs/page-22.png',
-  './docs/page-23.png',
-  './docs/page-24.png',
-  './docs/page-25.png',
-  './docs/WAT enhanced.pdf',
-  './docs/page-26.png',
-  './docs/page-27.png',
-  './docs/page-28.png',
-  './docs/page-29.png',
-  './docs/page-30.png',
-  './docs/page-31.png',
-  './docs/page-32.png',
-  './docs/page-33.png',
-  './data/sup90-cleararea-stageA.json',
-  './data/sup90-clear-standard-exact.json',
-  './data/sup90-clear-eapsoff-exact.json',
-  './data/sup90-clear-eapson-exact.json',
-  './data/sup90-clear-ibf-exact.json',
-  './data/sup90-cleararea-stageB.json',
 ];
 
 self.addEventListener('install', (event) => {

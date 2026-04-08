@@ -1,6 +1,4 @@
-Build v16.8.6
-
-Atualizacao v16.8.6: ajuste fino da curva 30 do CAT B IBF Installed no Supplement 90.
+Build v16.6.6
 
 Confined Area: Supplement 50 only.
 
@@ -80,9 +78,3 @@ Visual fix v14.0: Figure 4D-4 now uses direct page-scale placement derived from 
 
 
 Atualização v16.5: bloco de referência padronizado também nos perfis Confined (Figure, Suplemento, Página e Fonte) e botões ± reduzidos mantendo teclado numérico.
-
-
-Supplement 90 Clear Area Stage A
-- Added rendered source pages for Figure 4-5 to 4-8 (pages S90-28 to S90-31).
-- Added docs/wat7000.pdf and data/sup90-cleararea-stageA.json.
-- This build only prepares Etapa A assets/anchoring references; the new 7000 kg clear-area family is not active in the engine yet.
