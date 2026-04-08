@@ -972,23 +972,6 @@ async function renderPreview(mode) {
   const out = els.vizPreviewCanvas;
   const source = await waitForCanvasReady(mode, mode === 'adc' ? 5000 : 2500);
   if (!source) {
-    if (mode === 'adc') {
-      const ok = await renderAdcPreviewToCanvas(out);
-      if (!ok) {
-        out.hidden = true;
-        syncViewerStageHeight(null);
-        return false;
-      }
-      const stageWidth = Math.max(320, els.viewerPane.getBoundingClientRect().width - 2);
-      const scale = stageWidth / out.width;
-      const displayHeight = Math.round(out.height * scale);
-      out.style.width = stageWidth + 'px';
-      out.style.height = displayHeight + 'px';
-      out.hidden = false;
-      out.dataset.mode = mode;
-      syncViewerStageHeight(displayHeight);
-      return true;
-    }
     out.hidden = true;
     syncViewerStageHeight(null);
     return false;
@@ -1017,14 +1000,17 @@ function resizeActiveFrame(mode) {
     const doc = frame.contentDocument || frame.contentWindow?.document;
     if (!doc) return;
     const h = getModeContentHeight(doc, mode);
-    if (h > 0) frame.style.height = `${h}px`;
+    if (h > 0) {
+      frame.style.height = `${h}px`;
+      if (mode === 'adc' && frame.classList.contains('active')) syncViewerStageHeight(h);
+    }
   } catch (error) {
     console.warn('Falha ao ajustar altura do frame', mode, error);
   }
 }
 
 function clearVisualization() {
-  Object.values(frameMap).forEach(frame => frame.classList.remove('active'));
+  hideAllFrames();
   document.querySelectorAll('.viewer-tab').forEach(btn => btn.classList.remove('active'));
   els.viewerPane.classList.add('is-empty');
   els.vizPlaceholder.hidden = false;
@@ -1139,6 +1125,38 @@ function openFullscreenChart(mode) {
   fitFullscreenCanvas();
 }
 
+function showFrameDirect(mode, doc) {
+  const frame = frameMap[mode];
+  if (!frame || !doc) return false;
+  const h = getModeContentHeight(doc, mode);
+  const heightPx = Math.max(240, h || 0);
+  frame.classList.add('active');
+  frame.style.position = 'relative';
+  frame.style.left = '0';
+  frame.style.top = '0';
+  frame.style.width = '100%';
+  frame.style.height = heightPx + 'px';
+  frame.style.visibility = 'visible';
+  frame.style.pointerEvents = 'auto';
+  frame.style.border = '0';
+  frame.style.background = '#111827';
+  syncViewerStageHeight(heightPx);
+  return true;
+}
+
+function hideAllFrames() {
+  Object.values(frameMap).forEach(frame => {
+    frame.classList.remove('active');
+    frame.style.position = 'absolute';
+    frame.style.left = '-10000px';
+    frame.style.top = '0';
+    frame.style.width = '1px';
+    frame.style.height = '1px';
+    frame.style.visibility = 'hidden';
+    frame.style.pointerEvents = 'none';
+  });
+}
+
 function setVisualization(mode, forceShow = true) {
   if (!mode) {
     clearVisualization();
@@ -1148,15 +1166,21 @@ function setVisualization(mode, forceShow = true) {
     els.viewerPane.classList.remove('is-empty');
     els.vizPlaceholder.hidden = true;
   }
-  Object.entries(frameMap).forEach(([key, frame]) => frame.classList.toggle('active', key === mode));
+  hideAllFrames();
   document.querySelectorAll('.viewer-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.viz === mode));
   els.visualSelect.value = mode;
   saveCtx({ cataVizMode: mode });
   els.vizSubtitle.textContent = mapVizLabel(mode);
   renderVisualizationMeta(mode);
   const prep = prepareEmbeddedView(mode);
-  prep.then(async () => {
+  prep.then(async (doc) => {
     await sleep(mode === 'adc' ? 40 : 120);
+    if (mode === 'adc' && doc) {
+      els.vizPreviewCanvas.hidden = true;
+      showFrameDirect(mode, doc);
+      renderVisualizationMeta(mode);
+      return;
+    }
     await renderPreview(mode);
     renderVisualizationMeta(mode);
   });
