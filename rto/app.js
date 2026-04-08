@@ -1146,19 +1146,25 @@ async function runFromBridge(ctx = {}) {
     throw error;
   }
 
-  paEl.value = String(pa);
-  oatEl.value = String(oat);
-  weightEl.value = String(weight);
-  windEl.value = String(wind);
-  [paEl, oatEl, weightEl, windEl].forEach((el) => {
+  const applyField = (el, value) => {
+    el.value = String(value);
     el.dispatchEvent(new Event('input', { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
-    el.dispatchEvent(new Event('blur', { bubbles: true }));
-  });
+  };
+  applyField(paEl, pa);
+  applyField(oatEl, oat);
+  applyField(weightEl, weight);
+  applyField(windEl, wind);
 
   try { await refreshWeightSensitiveProfileIfNeeded(); } catch {}
   try { await ensureEffectiveProfileLoaded({ preserveInputs: true, autoRun: false }); } catch {}
-  await runCalculation();
+
+  applyField(paEl, pa);
+  applyField(oatEl, oat);
+  applyField(weightEl, weight);
+  applyField(windEl, wind);
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  await runCalculation({ skipEnsureProfile: true });
   return {
     metricText: finalMetric.textContent || '—',
     rtoMeters: Number(String(finalMetric.textContent || '').replace(/[^\d.,-]/g, '').replace(/\./g, '').replace(',', '.')) || 0,

@@ -922,6 +922,25 @@ function syncViewerStageHeight(px = null) {
 async function renderPreview(mode) {
   const out = els.vizPreviewCanvas;
 
+  const source = getSourceCanvas(mode);
+  if (mode === 'adc' && source) {
+    const crop = getCanvasCrop(source, mode);
+    const stageWidth = Math.max(320, els.viewerPane.getBoundingClientRect().width - 2);
+    const scale = stageWidth / crop.w;
+    const displayHeight = Math.round(crop.h * scale);
+    out.width = crop.w;
+    out.height = crop.h;
+    out.style.width = stageWidth + 'px';
+    out.style.height = displayHeight + 'px';
+    const ctx = out.getContext('2d');
+    ctx.clearRect(0,0,out.width,out.height);
+    ctx.drawImage(source, crop.x, crop.y, crop.w, crop.h, 0, 0, crop.w, crop.h);
+    out.hidden = false;
+    out.dataset.mode = mode;
+    syncViewerStageHeight(displayHeight);
+    return true;
+  }
+
   if (mode === 'adc') {
     const ok = await renderAdcPreviewToCanvas(out);
     if (!ok) {
@@ -940,7 +959,6 @@ async function renderPreview(mode) {
     return true;
   }
 
-  const source = getSourceCanvas(mode);
   if (!source) {
     out.hidden = true;
     syncViewerStageHeight(null);
@@ -1012,11 +1030,16 @@ function drawFullscreenSource(mode) {
     return true;
   }
 
-  if (mode === 'adc') {
-    return false;
+  const source = getSourceCanvas(mode);
+  if (mode === 'adc' && source) {
+    const crop = getCanvasCrop(source, mode);
+    out.width = crop.w;
+    out.height = crop.h;
+    ctx.clearRect(0,0,out.width,out.height);
+    ctx.drawImage(source, crop.x, crop.y, crop.w, crop.h, 0, 0, crop.w, crop.h);
+    return true;
   }
 
-  const source = getSourceCanvas(mode);
   if (!source) return false;
   const crop = getCanvasCrop(source, mode);
   out.width = crop.w;
@@ -1176,6 +1199,7 @@ async function runFlow() {
   els.resultCard.classList.remove('result-ok', 'result-bad');
   try {
     const [wat, rto] = await Promise.all([runWAT(input), runRTO(input)]);
+    await sleep(80);
     const adc = await runADC(input, rto);
     renderResults(wat, rto, adc);
     setVisualization(els.visualSelect.value || 'adc');
