@@ -1822,7 +1822,88 @@ const GEOM_KEY = 'aw139_adc_geometry_v49';
       return true;
     }
 
-    window.addEventListener('resize', resizeCanvas);
+    
+    function bridgeRowsFromAnalysis(analysis) {
+      return (analysis?.rows || []).map(r => ({
+        id: r.id || r.name,
+        name: r.name || r.id || '',
+        labelPoint: r.labelPoint ? clone(r.labelPoint) : null,
+        metersFromRef: Number(r.metersFromRef || 0),
+        availableAsda: Number(r.availableAsda || 0),
+        availableTora: Number(r.availableTora || 0),
+        availableToda: Number(r.availableToda || 0),
+        distStart: Number(r.distStart || 0),
+        go: !!r.go,
+        rtoOk: !!r.rtoOk
+      }));
+    }
+
+    function getBridgePayload() {
+      const base = currentBase();
+      const runway = currentRunway(base);
+      const chart = currentDisplayChart(base, runway);
+      const src = chartSource(base, runway);
+      const analysis = state.analysis || null;
+      return {
+        baseId: state.currentBaseId,
+        runwayId: state.currentRunwayId,
+        departureEnd: state.departureEnd,
+        rto: Number(document.getElementById('rtoInput')?.value || 0),
+        chart: chart ? { id: chart.id, label: chart.label, asset: chart.asset, src, size: clone(chart.size || {}) } : null,
+        runway: runway ? {
+          id: runway.id,
+          label: runway.label,
+          referenceEnd: runway.referenceEnd,
+          pavementRef: clone(runway.pavementRef || null),
+          pavementOpp: clone(runway.pavementOpp || null),
+          thresholdRef: clone(runway.thresholdRef || null),
+          thresholdOpp: clone(runway.thresholdOpp || null),
+          lengthM: Number(runway.lengthM || 0),
+          widthPx: Number(runway.widthPx || 0),
+          intersections: clone(runway.intersections || [])
+        } : null,
+        analysis: analysis ? {
+          gateMetersFromRef: Number(analysis.gateMetersFromRef || 0),
+          anyStartValid: !!analysis.anyStartValid,
+          greenLength: Number(analysis.greenLength || 0),
+          declared: clone(analysis.declared || {}),
+          rows: bridgeRowsFromAnalysis(analysis),
+          meta: clone(analysis.meta || {})
+        } : null
+      };
+    }
+
+    async function analyzeFromBridge(ctx = {}) {
+      if (ctx.baseId) state.currentBaseId = String(ctx.baseId);
+      if (ctx.runwayId) state.currentRunwayId = String(ctx.runwayId);
+      if (ctx.departureEnd) state.departureEnd = String(ctx.departureEnd);
+      refreshBaseOptions();
+      refreshDepartureOptions();
+      const token = `${state.currentRunwayId}::${state.departureEnd}`;
+      const depSel = document.getElementById('departureEndSelect');
+      if (depSel) depSel.value = token;
+      const baseSel = document.getElementById('baseSelect');
+      if (baseSel) baseSel.value = state.currentBaseId;
+      if (ctx.rto != null) document.getElementById('rtoInput').value = String(ctx.rto);
+      analyze();
+      return getBridgePayload();
+    }
+
+    window.__adcBridge = {
+      analyzeFromBridge,
+      getPayload: getBridgePayload,
+      getAnalysis: () => clone(state.analysis || null),
+      getRows: () => bridgeRowsFromAnalysis(state.analysis || null),
+      getChartSource: () => getBridgePayload().chart,
+      getCurrentState: () => ({
+        currentBaseId: state.currentBaseId,
+        currentRunwayId: state.currentRunwayId,
+        departureEnd: state.departureEnd,
+        vizPage: state.vizPage
+      })
+    };
+
+window.addEventListener('resize', resizeCanvas);
     chartImg.addEventListener('load', resizeCanvas);
     document.getElementById('analyzeBtn').addEventListener('click', analyze);
     document.getElementById('baseSelect').addEventListener('change', e => setCurrentBase(e.target.value));

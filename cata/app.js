@@ -3,6 +3,8 @@ const adcFrame = document.getElementById('adcFrame');
 const watFrame = document.getElementById('watFrame');
 const rtoFrame = document.getElementById('rtoFrame');
 const frameMap = { adc: adcFrame, wat: watFrame, rto: rtoFrame };
+const adcPreviewState = { payload: null };
+const imageCache = new Map();
 
 const els = {
   base: document.getElementById('baseSelect'),
@@ -45,6 +47,128 @@ const els = {
 function loadCtx() { try { return JSON.parse(localStorage.getItem(SHARED_KEY) || '{}'); } catch { return {}; } }
 function saveCtx(patch) { localStorage.setItem(SHARED_KEY, JSON.stringify({ ...loadCtx(), ...patch, updatedAt: new Date().toISOString(), lastModule: 'cata' })); }
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function loadImage(src) {
+  if (!src) return null;
+  if (imageCache.has(src)) return imageCache.get(src);
+  const p = new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  }).catch(() => null);
+  imageCache.set(src, p);
+  return p;
+}
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+function pointAlongRunway(runway, metersFromRef) {
+  const len = Number(runway?.lengthM || 0) || 1;
+  const t = Math.max(0, Math.min(1, Number(metersFromRef || 0) / len));
+  const a = runway?.pavementRef || runway?.thresholdRef;
+  const b = runway?.pavementOpp || runway?.thresholdOpp;
+  if (!a || !b) return { x: 0, y: 0 };
+  return { x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t) };
+}
+function shortPointLabel(name = '') {
+  const text = String(name || '').trim();
+  const m = text.match(/TWY\s+(.+)$/i);
+  if (m) return `TWY ${m[1]}`;
+  return text;
+}
+function drawLabeledBox(ctx, x, y, lines, ok = true, opts = {}) {
+  const padX = 12, padY = 10, lineH = 28;
+  ctx.save();
+  ctx.font = 'bold 18px Inter, Arial, sans-serif';
+  const width = Math.max(...lines.map(line => ctx.measureText(line).width), 70) + padX * 2;
+  const height = lines.length * lineH + padY * 2 - 8;
+  const boxX = x + (opts.dx || 0);
+  const boxY = y + (opts.dy || 0);
+  ctx.strokeStyle = ok ? '#7CFC00' : '#ef4444';
+  ctx.fillStyle = '#0f1b2a';
+  ctx.lineWidth = 4;
+  const radius = 14;
+  ctx.beginPath();
+  const w = width, h = height;
+  const rx = boxX, ry = boxY;
+  ctx.moveTo(rx + radius, ry);
+  ctx.arcTo(rx + w, ry, rx + w, ry + h, radius);
+  ctx.arcTo(rx + w, ry + h, rx, ry + h, radius);
+  ctx.arcTo(rx, ry + h, rx, ry, radius);
+  ctx.arcTo(rx, ry, rx + w, ry, radius);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = ok ? '#7CFC00' : '#ef4444';
+  lines.forEach((line, idx) => ctx.fillText(line, boxX + padX, boxY + padY + 18 + idx * lineH));
+  ctx.restore();
+  return { x: boxX, y: boxY, w: width, h: height };
+}
+async function renderAdcPreviewToCanvas(out) {
+  const payload = adcPreviewState.payload;
+  if (!payload?.chart?.src || !payload?.runway) return false;
+  const img = await loadImage(payload.chart.src);
+  if (!img) return false;
+  const width = img.naturalWidth || payload.chart.size?.width || 1000;
+  const height = img.naturalHeight || payload.chart.size?.height || 1400;
+  out.width = width;
+  out.height = height;
+  const ctx = out.getContext('2d');
+  ctx.clearRect(0, 0, width, height);
+  ctx.drawImage(img, 0, 0, width, height);
+  const rows = payload.analysis?.rows || [];
+  const gatePoint = pointAlongRunway(payload.runway, payload.analysis?.gateMetersFromRef || 0);
+  ctx.save();
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = '#7CFC00';
+  ctx.fillStyle = '#7CFC00';
+  const start = payload.runway.pavementRef || payload.runway.thresholdRef;
+  const end = payload.runway.pavementOpp || payload.runway.thresholdOpp;
+  if (start && end) {
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(end.x, end.y);
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.arc(gatePoint.x, gatePoint.y, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  // RTO label on left
+  const rtoText = `${Math.round(payload.rto || 0)} m`;
+  const rtoBox = drawLabeledBox(ctx, 50, Math.max(90, gatePoint.y - 30), ['RTO', rtoText], true);
+  ctx.save();
+  ctx.strokeStyle = '#7CFC00'; ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(rtoBox.x + rtoBox.w, rtoBox.y + rtoBox.h / 2);
+  ctx.lineTo(gatePoint.x - 10, gatePoint.y);
+  ctx.stroke();
+  ctx.restore();
+  rows.forEach((row, idx) => {
+    const p = row.labelPoint || pointAlongRunway(payload.runway, row.metersFromRef || 0);
+    const isFull = idx === 0 || /pav|full|thr/i.test(String(row.name || ''));
+    const label = isFull ? String(payload.departureEnd || row.name || '').trim() : shortPointLabel(row.name || row.id || '');
+    const value = `${Math.round(row.availableAsda || 0)} m`;
+    const dx = p.x < width / 2 ? 26 : -150;
+    const dy = p.y < height / 2 ? -40 : 16;
+    const box = drawLabeledBox(ctx, p.x, p.y, [label, value], row.go !== false, { dx, dy });
+    ctx.save();
+    ctx.strokeStyle = row.go !== false ? '#7CFC00' : '#ef4444';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    ctx.lineTo(dx >= 0 ? box.x : box.x + box.w, box.y + box.h / 2);
+    ctx.stroke();
+    ctx.restore();
+    ctx.save();
+    ctx.fillStyle = isFull ? '#3dd9ff' : '#f59e0b';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+  return true;
+}
 function setField(doc, id, value) {
   const el = doc.getElementById(id);
   if (!el) return false;
@@ -338,13 +462,31 @@ async function runRTO(input) {
 
 async function runADC(input, rtoResult) {
   const doc = await waitForIframe(adcFrame, ['baseSelect', 'departureEndSelect', 'rtoInput', 'analyzeBtn', 'decisionTable']);
-  const table = doc.getElementById('decisionTable');
-  const gateMetric = doc.getElementById('gateMetric');
-  const fullMetric = doc.getElementById('fullLengthMetric');
-  if (table) table.innerHTML = '';
-  if (gateMetric) gateMetric.textContent = '—';
-  if (fullMetric) fullMetric.textContent = '—';
+  const bridge = adcFrame.contentWindow?.__adcBridge;
+  if (bridge?.analyzeFromBridge) {
+    const payload = await bridge.analyzeFromBridge({
+      baseId: input.base,
+      departureEnd: input.departureEnd,
+      rto: rtoResult?.rtoMeters ?? 0,
+    });
+    adcPreviewState.payload = payload;
+    const rows = (payload?.analysis?.rows || []).map(row => ({
+      point: row.name,
+      rtoOk: row.rtoOk ? 'OK' : 'NO',
+      decision: row.go ? 'PODE' : 'NO GO',
+      go: !!row.go,
+      availableAsda: row.availableAsda || 0
+    }));
+    return {
+      gateText: payload?.analysis?.rows?.[0] ? `${Math.round(payload.analysis.rows[0].availableAsda)} m` : '—',
+      fullText: payload?.analysis?.rows?.length ? `${Math.round(Math.max(...payload.analysis.rows.map(r => Number(r.availableAsda || 0))))} m` : '—',
+      rows,
+      payload
+    };
+  }
 
+  const table = doc.getElementById('decisionTable');
+  if (table) table.innerHTML = '';
   setField(doc, 'baseSelect', input.base);
   await sleep(120);
   setField(doc, 'departureEndSelect', input.departureEnd);
@@ -357,15 +499,10 @@ async function runADC(input, rtoResult) {
     const tds = tr.querySelectorAll('td');
     if (tds.length < 3) return null;
     const point = tds[0].textContent.trim();
+    const asdaText = (tds[1]?.textContent || '').trim();
     const rtoOkText = (tds[tds.length - 1]?.textContent || '').trim();
-    const decisionText = tds.length >= 4 ? tds[3].textContent.trim() : rtoOkText;
-    const go = /^OK$/i.test(rtoOkText) || (/PODE/i.test(decisionText) && !/NÃO PODE|NAO PODE|NO GO/i.test(decisionText));
-    return {
-      point,
-      rtoOk: rtoOkText,
-      decision: decisionText,
-      go
-    };
+    const go = /^OK$/i.test(rtoOkText);
+    return { point, rtoOk: rtoOkText, decision: go ? 'PODE' : 'NO GO', go, availableAsda: numberFromText(asdaText) || 0 };
   }).filter(Boolean);
 
   return {
@@ -379,7 +516,11 @@ function renderResults(wat, rto, adc) {
   const decisionRows = adc?.rows || [];
   const watOk = wat?.marginKg != null ? wat.marginKg >= 0 : false;
   const badPoints = decisionRows.filter(row => !row.go).map(row => row.point);
-  const fullRunwayRow = decisionRows.find(row => /^(full|pista|full length)$/i.test(String(row.point || '').trim()));
+  const fullRunwayRow = decisionRows.reduce((best, row) => {
+    if (row?.availableMeters == null) return best;
+    if (!best || row.availableMeters > best.availableMeters) return row;
+    return best;
+  }, null) || decisionRows.find(row => /^(full|pista|full length|pav)/i.test(String(row.point || '').trim()));
   const runwayToraOk = fullRunwayRow ? fullRunwayRow.go : false;
   const overallOk = watOk && runwayToraOk;
 
@@ -404,7 +545,8 @@ function renderResults(wat, rto, adc) {
       ? `GO — pista comporta o RTO. Restrição por ponto: ${badPoints.join(', ')}.`
       : 'GO — pista comporta o RTO em toda a extensão.';
   } else {
-    els.rtoSummary.textContent = 'NO GO — item negativo: RTO maior que a TORA da pista.';
+    const refPoint = fullRunwayRow?.point ? ` (${fullRunwayRow.point})` : '';
+    els.rtoSummary.textContent = `NO GO — item negativo: RTO maior que a distância disponível da pista${refPoint}.`;
   }
 
   els.watBox.classList.remove('ok', 'bad');
@@ -697,15 +839,28 @@ function syncViewerStageHeight(px = null) {
   els.vizWrap.style.minHeight = `${h}px`;
 }
 
-function renderPreview(mode) {
+async function renderPreview(mode) {
   const out = els.vizPreviewCanvas;
 
-  const source = getSourceCanvas(mode);
-  if (mode === 'adc' && !source) {
-    out.hidden = true;
-    syncViewerStageHeight(null);
-    return false;
+  if (mode === 'adc') {
+    const ok = await renderAdcPreviewToCanvas(out);
+    if (!ok) {
+      out.hidden = true;
+      syncViewerStageHeight(null);
+      return false;
+    }
+    const stageWidth = Math.max(320, els.viewerPane.getBoundingClientRect().width - 2);
+    const scale = stageWidth / out.width;
+    const displayHeight = Math.round(out.height * scale);
+    out.style.width = stageWidth + 'px';
+    out.style.height = displayHeight + 'px';
+    out.hidden = false;
+    out.dataset.mode = mode;
+    syncViewerStageHeight(displayHeight);
+    return true;
   }
+
+  const source = getSourceCanvas(mode);
   if (!source) {
     out.hidden = true;
     syncViewerStageHeight(null);
@@ -748,6 +903,7 @@ function clearVisualization() {
   els.vizPlaceholder.hidden = false;
   els.vizPreviewCanvas.hidden = true;
   syncViewerStageHeight(null);
+  adcPreviewState.payload = null;
   els.vizSubtitle.textContent = mapVizLabel('');
   els.visualSelect.value = '';
   saveCtx({ cataVizMode: '' });
@@ -871,9 +1027,10 @@ function setVisualization(mode, forceShow = true) {
   saveCtx({ cataVizMode: mode });
   els.vizSubtitle.textContent = mapVizLabel(mode);
   renderVisualizationMeta(mode);
-  prepareEmbeddedView(mode).then(async () => {
-    await sleep(mode === 'adc' ? 280 : 120);
-    renderPreview(mode);
+  const prep = mode === 'adc' ? Promise.resolve() : prepareEmbeddedView(mode);
+  prep.then(async () => {
+    await sleep(mode === 'adc' ? 40 : 120);
+    await renderPreview(mode);
     renderVisualizationMeta(mode);
   });
 }
