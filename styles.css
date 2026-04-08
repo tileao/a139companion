@@ -43,15 +43,8 @@ a{color:inherit}
   background:rgba(30,41,59,.92);
   backdrop-filter:blur(12px);
 }
-.home-brand{display:flex;align-items:center;gap:14px;min-width:0}
-.brand-mark{
-  width:52px;height:52px;border-radius:16px;
-  display:grid;place-items:center;
-  font-weight:800;letter-spacing:.06em;
-  background:linear-gradient(180deg,#2a4355,#193244);
-  color:#eef8fb;
-  border:1px solid rgba(70,194,186,.25);
-}
+.home-brand{display:flex;align-items:center;gap:0;min-width:0}
+.brand-mark{display:none}
 .brand-title{font-size:26px;font-weight:700;letter-spacing:.01em}
 .brand-subtitle{font-size:14px;color:var(--muted);margin-top:4px}
 .topbar-actions{display:flex;gap:10px;align-items:center}
@@ -117,6 +110,7 @@ a{color:inherit}
 .section-head{display:flex;align-items:end;justify-content:space-between;gap:12px}
 .section-head h2{margin:4px 0 0;font-size:30px;line-height:1.06}
 .flow-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.flow-grid.single-flow{grid-template-columns:minmax(0,1fr)}
 .flow-card,.module-card,.utility-card{
   position:relative;
   background:linear-gradient(180deg,rgba(36,52,71,.96),rgba(22,35,52,.96));

@@ -335,6 +335,7 @@ function pushSharedContext(input, patch = {}) {
     headwindKt: input.headwindKt,
     adcBase: input.base,
     adcDepartureEnd: input.departureEnd,
+    cataAircraftSet: input.aircraftSet,
     cataConfiguration: input.configuration,
     aircraftRegistration: input.registration || '',
     cataProcedure: 'clear',
@@ -471,16 +472,21 @@ async function runADC(input, rtoResult) {
     });
     adcPreviewState.payload = payload;
     const rows = (payload?.analysis?.rows || []).map(row => ({
+      id: row.id || '',
       point: row.name,
       rtoOk: row.rtoOk ? 'OK' : 'NO',
       decision: row.go ? 'PODE' : 'NO GO',
       go: !!row.go,
-      availableAsda: row.availableAsda || 0
+      availableAsda: Number(row.availableAsda || 0),
+      availableMeters: Number(row.availableAsda || 0)
     }));
+    const fullRow = rows.find(row => row.id === 'FULL') || rows[0] || null;
     return {
-      gateText: payload?.analysis?.rows?.[0] ? `${Math.round(payload.analysis.rows[0].availableAsda)} m` : '—',
-      fullText: payload?.analysis?.rows?.length ? `${Math.round(Math.max(...payload.analysis.rows.map(r => Number(r.availableAsda || 0))))} m` : '—',
+      gateText: fullRow ? `${Math.round(fullRow.availableAsda)} m` : '—',
+      fullText: fullRow ? `${Math.round(fullRow.availableAsda)} m` : '—',
       rows,
+      basisMetric: payload?.analysis?.basisMetric || payload?.analysis?.meta?.basisMetric || 'ASDA',
+      primaryPoint: payload?.analysis?.meta?.startLabel || fullRow?.point || input?.departureEnd || '',
       payload
     };
   }
@@ -502,27 +508,34 @@ async function runADC(input, rtoResult) {
     const asdaText = (tds[1]?.textContent || '').trim();
     const rtoOkText = (tds[tds.length - 1]?.textContent || '').trim();
     const go = /^OK$/i.test(rtoOkText);
-    return { point, rtoOk: rtoOkText, decision: go ? 'PODE' : 'NO GO', go, availableAsda: numberFromText(asdaText) || 0 };
+    const availableAsda = numberFromText(asdaText) || 0;
+    return { id: /^(full|pista|full length|pav|thr)/i.test(point) ? 'FULL' : point, point, rtoOk: rtoOkText, decision: go ? 'PODE' : 'NO GO', go, availableAsda, availableMeters: availableAsda };
   }).filter(Boolean);
 
+  const fullRow = rows.find(row => row.id === 'FULL') || rows[0] || null;
   return {
-    gateText: text(doc, 'gateMetric'),
-    fullText: text(doc, 'fullLengthMetric'),
-    rows
+    gateText: fullRow ? `${Math.round(fullRow.availableAsda)} m` : text(doc, 'gateMetric'),
+    fullText: fullRow ? `${Math.round(fullRow.availableAsda)} m` : text(doc, 'fullLengthMetric'),
+    rows,
+    basisMetric: 'ASDA',
+    primaryPoint: fullRow?.point || input?.departureEnd || ''
   };
 }
 
 function renderResults(wat, rto, adc) {
   const decisionRows = adc?.rows || [];
+  const basisMetric = adc?.basisMetric || 'ASDA';
   const watOk = wat?.marginKg != null ? wat.marginKg >= 0 : false;
-  const badPoints = decisionRows.filter(row => !row.go).map(row => row.point);
-  const fullRunwayRow = decisionRows.reduce((best, row) => {
-    if (row?.availableMeters == null) return best;
-    if (!best || row.availableMeters > best.availableMeters) return row;
-    return best;
-  }, null) || decisionRows.find(row => /^(full|pista|full length|pav)/i.test(String(row.point || '').trim()));
-  const runwayToraOk = fullRunwayRow ? fullRunwayRow.go : false;
-  const overallOk = watOk && runwayToraOk;
+  const badPoints = decisionRows.filter(row => !row.go && row.id !== 'FULL').map(row => row.point);
+  const fullRunwayRow = decisionRows.find(row => row.id === 'FULL')
+    || decisionRows.find(row => /^(full|pista|full length|pav|thr)/i.test(String(row.point || '').trim()))
+    || decisionRows.reduce((best, row) => {
+      if (row?.availableAsda == null) return best;
+      if (!best || row.availableAsda > best.availableAsda) return row;
+      return best;
+    }, null);
+  const runwayAsdaOk = fullRunwayRow ? fullRunwayRow.go : false;
+  const overallOk = watOk && runwayAsdaOk;
 
   els.watMax.textContent = wat?.maxText || '—';
   els.rtoMetric.textContent = rto?.metricText || '—';
@@ -540,19 +553,20 @@ function renderResults(wat, rto, adc) {
 
   if (!decisionRows.length) {
     els.rtoSummary.textContent = rto?.summary || 'Sem cálculo ainda.';
-  } else if (runwayToraOk) {
+  } else if (runwayAsdaOk) {
     els.rtoSummary.textContent = badPoints.length
-      ? `GO — pista comporta o RTO. Restrição por ponto: ${badPoints.join(', ')}.`
-      : 'GO — pista comporta o RTO em toda a extensão.';
+      ? `GO — ${basisMetric} da pista comporta o RTO. Restrição por ponto: ${badPoints.join(', ')}.`
+      : `GO — ${basisMetric} da pista comporta o RTO.`;
   } else {
-    const refPoint = fullRunwayRow?.point ? ` (${fullRunwayRow.point})` : '';
-    els.rtoSummary.textContent = `NO GO — item negativo: RTO maior que a distância disponível da pista${refPoint}.`;
+    const refPoint = adc?.primaryPoint || fullRunwayRow?.point || '';
+    const refSuffix = refPoint ? ` (${refPoint})` : '';
+    els.rtoSummary.textContent = `NO GO — item negativo: RTO maior que a ${basisMetric} disponível da pista${refSuffix}.`;
   }
 
   els.watBox.classList.remove('ok', 'bad');
   els.rtoBox.classList.remove('ok', 'bad');
   if (wat?.marginKg != null) els.watBox.classList.add(watOk ? 'ok' : 'bad');
-  if (decisionRows.length) els.rtoBox.classList.add(runwayToraOk ? 'ok' : 'bad');
+  if (decisionRows.length) els.rtoBox.classList.add(runwayAsdaOk ? 'ok' : 'bad');
 
   els.statusChip.textContent = overallOk ? 'OK para decolagem' : 'NO GO / revisar limites';
   els.statusChip.className = 'status-chip ' + (overallOk ? 'ok' : 'bad');
