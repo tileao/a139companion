@@ -24,13 +24,12 @@
       </div>
       <div class="topbar-right"></div>
     </header>
-
-    <header id="heroHeader" class="hero hero-compact">
+    <header id="heroHeader" class="hero hero-compact" hidden>
       <div>
         <p class="eyebrow">AW139 Companion App</p>
         <h1>RTO / CTO Module</h1>
         <p id="subtitleEl" class="subtitle visually-hidden">Reject Take Off Distance — Supplement 50 — Figure 4-54</p>
-        <p id="buildVersionEl" class="build-version build-version-prominent">BUILD V39 • standard auto-switch 6800/7000 + unified Rev. 32 source</p>
+        <p id="buildVersionEl" class="build-version build-version-prominent">BUILD V53 • Figure 4-94 left-panel semantic relabel</p>
       </div>
     </header>
 
@@ -54,7 +53,7 @@
           <span>Configuration</span>
           <div class="select-wrap">
             <select id="configuration" aria-label="Configuration">
-              <option value="standard" selected>Standard</option>
+              <option value="standard" selected>Clean Air Intake</option>
               <option value="eapsOff">EAPS OFF</option>
               <option value="eapsOn">EAPS ON</option>
               <option value="ibfInstalled">IBF Installed</option>
@@ -154,8 +153,7 @@
     </div>
   </main>
 
-  <script src="app.js?v=rto-engine-v39"></script>
-
+  <script src="app.js?v=rto-engine-v49"></script>
   <script src="../shared/module-bridge.js"></script>
 </body>
 </html>
