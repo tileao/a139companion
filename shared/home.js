@@ -40,7 +40,7 @@ function renderPreferences(ctx){
 }
 
 function labelConfig(v){
-  const map={standard:'Standard',eaps_off:'EAPS OFF',eaps_on:'EAPS ON',ibf:'IBF'};
+  const map={standard:'Clean Air Intake',eaps_off:'EAPS OFF',eaps_on:'EAPS ON',ibf:'IBF'};
   return map[v]||String(v||'').toUpperCase();
 }
 
