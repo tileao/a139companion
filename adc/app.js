@@ -1874,9 +1874,18 @@ const GEOM_KEY = 'aw139_adc_geometry_v49';
     }
 
     async function analyzeFromBridge(ctx = {}) {
+      const rawDeparture = ctx.departureEnd != null ? String(ctx.departureEnd) : '';
       if (ctx.baseId) state.currentBaseId = String(ctx.baseId);
       if (ctx.runwayId) state.currentRunwayId = String(ctx.runwayId);
-      if (ctx.departureEnd) state.departureEnd = String(ctx.departureEnd);
+      if (rawDeparture) {
+        if (rawDeparture.includes('::')) {
+          const [rwId, dep] = rawDeparture.split('::');
+          if (rwId) state.currentRunwayId = rwId;
+          if (dep) state.departureEnd = dep;
+        } else {
+          state.departureEnd = rawDeparture;
+        }
+      }
       refreshBaseOptions();
       refreshDepartureOptions();
       const token = `${state.currentRunwayId}::${state.departureEnd}`;
