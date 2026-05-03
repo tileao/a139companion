@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111b26">
+  <title>AW139 Companion — OEI Drop Down</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a class="nav-btn" href="../index.html" aria-label="Home">⌂</a>
+        <div class="product-tag">
+          <div class="product-icon">↧</div>
+          <div>
+            <div class="product-line">AW139 Companion</div>
+            <div class="product-sub">OEI Drop Down / Height Loss</div>
+          </div>
+        </div>
+      </div>
+      <div class="mode-chip">Treinamento / auditoria</div>
+    </header>
+
+    <section class="hero">
+      <div>
+        <div class="eyebrow">CAT A offshore</div>
+        <h1>Drop down em perda de motor</h1>
+        <p>Calcula a perda de altura / drop down a partir dos perfis offshore de pouso e decolagem, usando a mesma entrada de PA, OAT, peso e componente de vento.</p>
+      </div>
+      <div class="hero-card">
+        <span>Fonte operacional</span>
+        <strong>RFM 4D — Sup. 12 / 50 / 97</strong>
+        <small>Clear Air Intake / EAPS OFF / EAPS ON</small>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <section class="panel input-panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-kicker">Entradas</div>
+            <h2>Perfil e condições</h2>
+          </div>
+          <button id="loadContextBtn" class="ghost-btn" type="button">Usar contexto salvo</button>
+        </div>
+
+        <div class="form-grid form-grid-2">
+          <label class="field">
+            <span>Fase</span>
+            <select id="phaseSelect">
+              <option value="landing">Pouso</option>
+              <option value="takeoff">Decolagem</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Perfil</span>
+            <select id="profileSelect"></select>
+          </label>
+        </div>
+
+        <div class="form-grid form-grid-2">
+          <label class="field">
+            <span>PA (ft)</span>
+            <input id="pressureAltitude" type="number" value="0" inputmode="numeric" step="10">
+          </label>
+          <label class="field">
+            <span>OAT (°C)</span>
+            <input id="oat" type="number" value="25" inputmode="numeric" step="1">
+          </label>
+        </div>
+
+        <div class="form-grid form-grid-2">
+          <label class="field">
+            <span>GW (kg)</span>
+            <input id="weight" type="number" value="6500" inputmode="numeric" step="10">
+          </label>
+          <label class="field">
+            <span>Headwind (kt)</span>
+            <input id="headwind" type="number" value="5" inputmode="numeric" step="1">
+          </label>
+        </div>
+
+        <div class="action-row">
+          <button id="calculateBtn" class="run-btn" type="button">Calcular Drop Down</button>
+          <button id="copyBtn" class="ghost-btn" type="button">Copiar resultado</button>
+        </div>
+
+        <div class="note-box">
+          <strong>Observação:</strong> vento é tratado como componente de proa. Vento negativo não recebe crédito. Para perfil descending, a correção de +15 ft é aplicada automaticamente.
+        </div>
+      </section>
+
+      <section class="panel result-panel" id="resultPanel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-kicker">Resultado</div>
+            <h2>OEI height loss</h2>
+          </div>
+          <span id="statusChip" class="status-chip warn">Aguardando</span>
+        </div>
+
+        <div class="result-main">
+          <div class="result-label">Drop Down / Height Loss</div>
+          <div class="result-value" id="heightLossValue">—</div>
+          <div class="result-sub" id="resultSub">Preencha e calcule.</div>
+        </div>
+
+        <div class="result-grid">
+          <div class="mini-card">
+            <span>Base chart</span>
+            <strong id="chartFamily">—</strong>
+          </div>
+          <div class="mini-card">
+            <span>Correção perfil</span>
+            <strong id="profileCorrection">—</strong>
+          </div>
+          <div class="mini-card">
+            <span>Correção vento</span>
+            <strong id="windCorrection">—</strong>
+          </div>
+          <div class="mini-card">
+            <span>Envelope</span>
+            <strong id="envelopeInfo">—</strong>
+          </div>
+        </div>
+
+        <div id="messages" class="messages"></div>
+      </section>
+    </section>
+
+    <section class="panel reference-panel">
+      <div class="panel-head compact">
+        <div>
+          <div class="panel-kicker">Referência</div>
+          <h2>Perfis implementados</h2>
+        </div>
+      </div>
+      <div class="reference-grid">
+        <div>
+          <h3>Pouso</h3>
+          <p><strong>CAT A Offshore LEVEL profile</strong> — offshore standard.</p>
+          <p><strong>CAT A Offshore DESCENDING profile</strong> — offshore standard + 15 ft.</p>
+        </div>
+        <div>
+          <h3>Decolagem</h3>
+          <p><strong>CAT A OFFSHORE procedure</strong> — offshore standard CTO / BTS.</p>
+          <p><strong>CAT A ENHANCED OFFSHORE procedure</strong> — enhanced offshore, rotor speed 102%.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
